@@ -1,0 +1,465 @@
+#############################################################################################
+#                                           ARMOR                                           #
+#                                       Configuration                                       #
+#############################################################################################
+Note: All waffle related options are only valid if your ES node is running on windows OS
+
+
+# Enable or disable the complete Armor plugin functionality
+#armor.enabled: true
+
+# Path where to write/read the armor master key file
+#armor.key_path: .
+
+# When using DLS or FLS and a get or mget is performed then rewrite it as search request
+armor.rewrite_get_as_search: true
+
+# The index name where ARMOR will store its configuration and various other informations related to ARMOR itself
+# This index can only be access from localhost
+#armor.config_index_name: armor
+
+# Enable or disable HTTP session which caches the authentication and authorization informations in a cookie
+#armor.http.enable_sessions: false
+
+# Enable or disable audit logging
+#armor.auditlog.enabled: true
+
+# If this is true (default is false) then ARMOR will check if elasticsearch is running as root/windows admin and if so then abort.
+#armor.check_for_root: false
+
+# If this is true (default is false) then allow all HTTP REST requests from nodes loopback (e.g. localhost)
+#armor.allow_all_from_loopback: false
+
+# If this is true (default: false) then enable authenticated transports requests (e.g. TransportClient authentication)
+# This can be done in that way (for example): 
+# TransportClient.get(new GetRequest("marketing", "customer", "tp_3").putHeader("armor_transport_creds", "c2FseWg6c2VjcmV0"))
+# Add a header "armor_transport_creds"
+# base64(username":"password) is the credentials string
+# base64(spock:secret) -> c3BvY2s6c2VjcmV0
+#armor.transport_auth.enabled: false
+
+#############################################################################################
+# Transport layer SSL                                                                       #
+#                                                                                           #
+#############################################################################################
+# Enable or disable node-to-node ssl encryption
+#armor.ssl.transport.node.enabled: false
+# JKS or PKCS12
+#armor.ssl.transport.node.keystore_type: JKS
+# Absolute path to the keystore file (this stores the server certificates)
+#armor.ssl.transport.node.keystore_filepath: null
+# Keystore password
+#armor.ssl.transport.node.keystore_password: changeit
+# Do other nodes have to authenticate themself to the cluster, default is true
+#armor.ssl.transport.node.enforce_clientauth: true
+# JKS or PKCS12
+#armor.ssl.transport.node.truststore_type: JKS
+# Absolute path to the truststore file (this stores the client certificates)
+#armor.ssl.transport.node.truststore_filepath: null
+# Truststore password
+#armor.ssl.transport.node.truststore_password: changeit
+# Enforce hostname verification
+#armor.ssl.transport.node.encforce_hostname_verification: true
+# If hostname verification specify if hostname should be resolved
+#armor.ssl.transport.node.encforce_hostname_verification.resolve_host_name: true
+
+#############################################################################################
+# REST layer SSL                                                                            #
+#                                                                                           #
+#############################################################################################
+# Enable or disable rest layer security (https)
+#armor.ssl.transport.http.enabled: false
+# JKS or PKCS12
+#armor.ssl.transport.http.keystore_type: JKS
+# Absolute path to the keystore file (this stores the server certificates)
+#armor.ssl.transport.http.keystore_filepath: null
+# Keystore password
+#armor.ssl.transport.http.keystore_password: changeit
+# Do the clients (typically the browser or the proxy) have to authenticate themself to the http server, default is false
+#armor.ssl.transport.http.enforce_clientauth: false
+# JKS or PKCS12
+#armor.ssl.transport.http.truststore_type: JKS
+# Absolute path to the truststore file (this stores the client certificates)
+#armor.ssl.transport.http.truststore_filepath: null
+# Truststore password
+#armor.ssl.transport.http.truststore_password: changeit
+
+
+#############################################################################################
+# X-Forwarded-For (XFF) header                                                              #
+#                                                                                           #
+#############################################################################################
+# X-Forwarded-For (XFF) header
+# If you have a http proxy in front of elasticsearch you have to configure this options to handle XFF properly
+#armor.http.xforwardedfor.header: X-Forwarded-For
+#armor.http.xforwardedfor.trustedproxies: null
+#armor.http.xforwardedfor.enforce: false
+
+#############################################################################################
+# Authentication backend                                                                    #
+#                                                                                           #
+#############################################################################################
+# Validates the username and credentials
+armor.authentication.authentication_backend.impl: com.petalmd.armor.authentication.backend.simple.SettingsBasedAuthenticationBackend
+#armor.authentication.authentication_backend.impl: com.petalmd.armor.authentication.backend.ldap.LDAPAuthenticationBackend
+#armor.authentication.authentication_backend.impl: com.petalmd.armor.authentication.backend.simple.AlwaysSucceedAuthenticationBackend
+#armor.authentication.authentication_backend.impl: com.petalmd.armor.authentication.backend.waffle.WaffleAuthenticationBackend
+# If caching is enabled then the authentication succeed for 24 h since the first successful login without hitting the backend again and again
+#armor.authentication.authentication_backend.cache.enable: true
+
+#############################################################################################
+# Authorization backend (authorizer)                                                        #
+#                                                                                           #
+#############################################################################################
+armor.authentication.authorizer.impl: com.petalmd.armor.authorization.simple.SettingsBasedAuthorizator
+#armor.authentication.authorizer.impl: com.petalmd.armor.authorization.ldap.LDAPAuthorizator
+#armor.authentication.authorizer.impl: com.petalmd.armor.authorization.waffle.WaffleAuthorizator
+# If caching is enabled then the role informations will be cached for 24 h without hitting the backend again and again
+#armor.authentication.authorizer.cache.enable: true
+
+#############################################################################################
+# HTTP authentication method                                                                #
+#                                                                                           #
+#############################################################################################
+# Define HTTP authentication method. In future we will here have more like NTLM, SPNEGO/Kerberos and Digest.
+armor.authentication.http_authenticator.impl: com.petalmd.armor.authentication.http.basic.HTTPBasicAuthenticator
+# HTTPProxyAuthenticator assume there is kind of proxy in front of elasticsearch which handles the authentication and stores the
+# username of the authenticated user in a http header 
+#armor.authentication.http_authenticator.impl: com.petalmd.armor.authentication.http.proxy.HTTPProxyAuthenticator
+# SSL mutual authentication (works only if armor.ssl.transport.http.enabled is 'true' with client auth enabled)
+#armor.authentication.http_authenticator.impl: com.petalmd.armor.authentication.http.clientcert.HTTPSClientCertAuthenticator
+# SPNEGO
+#armor.authentication.http_authenticator.impl: com.petalmd.armor.authentication.http.spnego.HTTPSpnegoAuthenticator
+# Absolute file path to jaas login config file
+#armor.authentication.spnego.login_config_filepath: null
+# Absolute file path to krb5 config file
+#armor.authentication.spnego.krb5_config_filepath: null
+# Name of the login entry in jaas login config file which represents the acceptor (server)
+#armor.authentication.spnego.login_config_name: com.sun.security.jgss.krb5.accept
+# Strip the realmname from username (hnelson@EXAMPLE.COM -> hnelson)
+#armor.authentication.spnego.strip_realm: true
+# Authenticates always a user with username 'armor_unauthenticated_user'
+#armor.authentication.http_authenticator.impl: com.petalmd.armor.authentication.http.HTTPUnauthenticatedAuthenticator
+
+# Waffle (Windows only, must be used with WaffleAuthorizator)
+#armor.authentication.http_authenticator.impl: com.petalmd.armor.authentication.http.waffle.HTTPWaffleAuthenticator
+# Strip domain name from user (COMPANY\spock -> spock)
+#armor.authentication.waffle.strip_domain: true
+
+#####################################################
+# Settings based authentication (define users and password directly here in the settings. Note: this is per node)
+#armor.authentication.settingsdb.user.<username>: password
+armor.authentication.settingsdb.user.user1: password
+armor.authentication.settingsdb.user.michaeljackson: neverland
+# If plain text password should be hashed use this. Supported digests are: SHA1 SHA256 SHA384 SHA512 MD5
+#armor.authentication.settingsdb.digest: SHA1
+#armor.authentication.settingsdb.user.michaeljackson: 824d55e7a62b7ca8751dff346ffab845a8f26d08
+# Note: Passwords may not be null or empty, minimum length is one character
+#####################################################
+
+#####################################################
+# Settings based authorization (define users and their roles directly here in the settings. Note: this is per node)
+#armor.authentication.authorization.settingsdb.roles.<username>: <array of roles>
+armor.authentication.authorization.settingsdb.roles.user1: ["role1","role2","role3"]
+armor.authentication.authorization.settingsdb.roles.michaeljackson: ["kingofpop","superstar"]
+#####################################################
+
+#####################################################
+# LDAP authentication backend (authenticate users against a LDAP or Active Directory)
+# The defaults are sufficient for Active Directory
+#armor.authentication.ldap.host: ["localhost:389"]
+#armor.authentication.ldap.ldaps.ssl.enabled: false
+#armor.authentication.ldap.ldaps.starttls.enabled: false
+# JKS or PKCS12
+#armor.authentication.ldap.ldaps.truststore_type: JKS
+#armor.authentication.ldap.ldaps.truststore_filepath: null
+#armor.authentication.ldap.ldaps.truststore_password: null
+#armor.authentication.ldap.bind_dn: null
+#armor.authentication.ldap.password: null
+# Default is root dse ("")
+#armor.authentication.ldap.userbase: ""
+# Filter to search for users (currently in the whole subtree beneath userbase)
+# {0} is substituted with the username 
+#armor.authentication.ldap.usersearch: (sAMAccountName={0})
+# Use this attribute from the user as username (if not set then DN is used)
+#armor.authentication.ldap.username_attribute: null
+#####################################################
+
+#####################################################
+# LDAP authorization backend (gather roles from a LDAP or Active Directory, you have to configure the above LDAP authentication backend settings too)
+# The defaults are sufficient for Active Directory
+# Default is root dse ("")
+#armor.authentication.authorization.ldap.rolebase: ""
+# Filter to search for roles (currently in the whole subtree beneath rolebase)
+# {0} is substituted with the DN of the user
+# {1} is substituted with the username 
+# {2} is substituted with an attribute value from user's directory entry, of the authenticated user. Use userroleattribute to specify the name of the attribute 
+#armor.authentication.authorization.ldap.rolesearch: (member={0})
+# Specify the name of the attribute which value should be substituted with {2} above
+#armor.authentication.authorization.ldap.userroleattribute: null
+# Roles as an attribute of the user entry
+#armor.authentication.authorization.ldap.userrolename: memberOf
+# The attribute in a role entry containing the name of that role
+#armor.authentication.authorization.ldap.rolename: name
+# Resolve nested roles transitive (roles which are members of other roles and so on ...)
+#armor.authentication.authorization.ldap.resolve_nested_roles: false
+#####################################################
+
+#####################################################
+# HTTP proxy authenticator configuration
+# Header name which contains the username
+#armor.authentication.proxy.header:X-Authenticated-User
+# Array of trusted IP addresses (this are typically your proxy server(s))
+#armor.authentication.proxy.trusted_ips: null
+#####################################################
+
+#####################################################
+# HTTP SSL mutual authentication configuration
+# Attribute of that attribute in the certificate dn which holds the username
+#armor.authentication.https.clientcert.attributename: cn
+#####################################################
+
+##############################################################################################
+# Below here you configure what authenticated and authorized users are allowed to do (or not)#
+# This maps to the acl defined in the armor configuration index                        #
+#############################################################################################
+
+# Configure the restactionfilter to allow or forbid action 
+#armor.restactionfilter.names: ["readonly"]
+#armor.restactionfilter.readonly.allowed_actions: ["*SearchAction", "RestSearchScrollAction", "RestClearScrollAction", "RestGetAction", "RestGetSourceAction", "*MainAction", "RestValidateQueryAction", "RestMoreLikeThisAction", "RestPercolateAction"]
+#armor.restactionfilter.readonly.forbidden_actions: [...]
+
+# Configure the actionrequestfilter to allow or forbid action 
+armor.actionrequestfilter.names: ["readonly"]
+armor.actionrequestfilter.readonly.allowed_actions: ["indices:data/read/*", "*monitor*"]
+armor.actionrequestfilter.readonly.forbidden_actions: ["cluster:admin*", "indices:admin*", "indices:data/write*"]
+
+# Configure document level security (dls) filter
+# Warning: All this (with the exception of "exists") only works with not_analyzed fields because a term filter is used internally
+# http://www.elasticsearch.org/guide/en/elasticsearch/reference/current/query-dsl-term-filter.html
+#armor.dlsfilter.names: ["a", "b", "c", "d", "e", "f", "g"]
+#armor.dlsfilter.a: ["exists","field", "false"] # if field exists (or not) match -> false means field must exist
+#armor.dlsfilter.b: ["term", "field","value", "false"] # if field==value (or not) match
+#armor.dlsfilter.d: ["user_name","field", "false"] # if field==username (or not) match
+#armor.dlsfilter.e: ["user_roles","field", "false"] # if field contaions a user role (or not) match
+#armor.dlsfilter.f: ["ldap_user_attribute","field", "attribute", "false"] # if field==userldapattribute(attribute) (or not) match
+#armor.dlsfilter.g: ["ldap_user_roles","field", "attribute", "false"] # if field contains ldaprole(attribute) (or not) match
+
+# Configure the field level security (fls) filter to filter _source 
+#armor.flsfilter.names: ["stripsensitive"]
+#armor.flsfilter.stripsensitive.source_includes: []
+#armor.flsfilter.stripsensitive.source_excludes: ["sensitive*", "public.sensitive*.sub"]
+
+###### NO CHANGES BELOW THIS LINE ! ######
+
+#############################################################################################
+# Below there is list of all actionsrequests in elasticsearch 1.4 (for reference) .         #
+# Do not uncomment them here, they are configured above: armor.actionrequestfilter    #
+#############################################################################################
+#cluster:monitor/health
+#cluster:admin/nodes/restart
+#cluster:admin/nodes/shutdown
+#cluster:admin/repository/delete
+#cluster:admin/repository/get
+#cluster:admin/repository/put
+#cluster:admin/repository/verify
+#cluster:admin/reroute
+#cluster:admin/settings/update
+#cluster:admin/snapshot/create
+#cluster:admin/snapshot/delete
+#cluster:admin/snapshot/get
+#cluster:admin/snapshot/restore
+#cluster:admin/snapshot/status
+#cluster:monitor/nodes/hot_threads
+#cluster:monitor/nodes/info
+#cluster:monitor/nodes/liveness
+#cluster:monitor/nodes/stats
+#cluster:monitor/state
+#cluster:monitor/stats
+#cluster:monitor/task
+#indices:admin/aliases
+#indices:admin/aliases/exists
+#indices:admin/aliases/get
+#indices:admin/analyze
+#indices:admin/cache/clear
+#indices:admin/close
+#indices:admin/create
+#indices:admin/delete
+#indices:admin/exists
+#indices:admin/flush
+#indices:admin/get
+#indices:admin/mapping/delete
+#indices:admin/mapping/put
+#indices:admin/mappings/fields/get
+#indices:admin/mappings/get
+#indices:admin/open
+#indices:admin/optimize
+#indices:admin/refresh
+#indices:admin/settings/update
+#indices:admin/shards/search_shards
+#indices:admin/template/delete
+#indices:admin/template/get
+#indices:admin/template/put
+#indices:admin/types/exists
+#indices:admin/validate/query
+#indices:admin/warmers/delete
+#indices:admin/warmers/get
+#indices:admin/warmers/put
+#indices:data/benchmark/abort
+#indices:data/benchmark/start
+#indices:data/benchmark/status
+#indices:data/read/count
+#indices:data/read/exists
+#indices:data/read/explain
+#indices:data/read/get
+#indices:data/read/mget
+#indices:data/read/mlt
+#indices:data/read/mpercolate
+#indices:data/read/msearch
+#indices:data/read/mtv
+#indices:data/read/percolate
+#indices:data/read/script/get
+#indices:data/read/scroll
+#indices:data/read/scroll/clear
+#indices:data/read/search
+#indices:data/read/suggest
+#indices:data/read/tv
+#indices:data/write/bulk
+#indices:data/write/delete
+#indices:data/write/delete/by_query
+#indices:data/write/index
+#indices:data/write/script/delete
+#indices:data/write/script/put
+#indices:data/write/update
+#indices:monitor/recovery
+#indices:monitor/segments
+#indices:monitor/settings/get
+#indices:monitor/stats
+
+#############################################################################################
+# Below there is list of all restactions in elasticsearch 1.4 (for reference) .             #
+# Do not uncomment them here, they are configured above: armor.restactionfilter             #
+#############################################################################################
+#RestMainAction
+#RestNodesInfoAction
+#RestNodesStatsAction
+#RestNodesHotThreadsAction
+#RestNodesShutdownAction
+#RestNodesRestartAction
+#RestClusterStatsAction
+#RestClusterStateAction
+#RestClusterHealthAction
+#RestClusterUpdateSettingsAction
+#RestClusterGetSettingsAction
+#RestClusterRerouteAction
+#RestClusterSearchShardsAction
+#RestPendingClusterTasksAction
+#RestPutRepositoryAction
+#RestGetRepositoriesAction
+#RestDeleteRepositoryAction
+#RestVerifyRepositoryAction
+#RestGetSnapshotsAction
+#RestCreateSnapshotAction
+#RestRestoreSnapshotAction
+#RestDeleteSnapshotAction
+#RestSnapshotsStatusAction
+
+#RestIndicesExistsAction
+#RestTypesExistsAction
+#RestGetIndicesAction
+#RestIndicesStatsAction
+#RestIndicesStatusAction
+#RestIndicesSegmentsAction
+#RestGetAliasesAction
+#RestAliasesExistAction
+#RestIndexDeleteAliasesAction
+#RestIndexPutAliasAction
+#RestIndicesAliasesAction
+#RestGetIndicesAliasesAction
+#RestCreateIndexAction
+#RestDeleteIndexAction
+#RestCloseIndexAction
+#RestOpenIndexAction
+
+#RestUpdateSettingsAction
+#RestGetSettingsAction
+
+#RestAnalyzeAction
+#RestGetIndexTemplateAction
+#RestPutIndexTemplateAction
+#RestDeleteIndexTemplateAction
+#RestHeadIndexTemplateAction
+
+#RestPutWarmerAction
+#RestDeleteWarmerAction
+#RestGetWarmerAction
+
+#RestPutMappingAction
+#RestDeleteMappingAction
+#RestGetMappingAction
+#RestGetFieldMappingAction
+
+#RestRefreshAction
+#RestFlushAction
+#RestOptimizeAction
+#RestUpgradeAction
+#RestClearIndicesCacheAction
+
+#RestIndexAction
+#RestGetAction
+#RestGetSourceAction
+#RestHeadAction
+#RestMultiGetAction
+#RestDeleteAction
+#RestDeleteByQueryAction
+#org.elasticsearch.rest.action.count.RestCountAction
+#RestSuggestAction
+#RestTermVectorAction
+#RestMultiTermVectorsAction
+#RestBulkAction
+#RestUpdateAction
+#RestPercolateAction
+#RestMultiPercolateAction
+
+#RestSearchAction
+#RestSearchScrollAction
+#RestClearScrollAction
+#RestMultiSearchAction
+
+#RestValidateQueryAction
+
+#RestMoreLikeThisAction
+
+#RestExplainAction
+
+#RestRecoveryAction
+
+### Templates API
+#RestGetSearchTemplateAction
+#RestPutSearchTemplateAction
+#RestDeleteSearchTemplateAction
+
+### Scripts API
+#RestGetIndexedScriptAction
+#RestPutIndexedScriptAction
+#RestDeleteIndexedScriptAction
+
+
+### Cat API
+#RestAllocationAction
+#RestShardsAction
+#RestMasterAction
+#RestNodesAction
+#RestIndicesAction
+#RestSegmentsAction
+### Fully qualified to prevent interference with rest.action.count.RestCountAction
+#org.elasticsearch.rest.action.cat.RestCountAction
+### Fully qualified to prevent interference with rest.action.indices.RestRecoveryAction
+#org.elasticsearch.rest.action.cat.RestRecoveryAction
+#RestHealthAction
+#org.elasticsearch.rest.action.cat.RestPendingClusterTasksAction
+#RestAliasAction
+#RestThreadPoolAction
+#RestPluginsAction
+#RestFielddataAction
+#RestCatAction
