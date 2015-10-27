@@ -3,6 +3,11 @@ Elasticsearch security for free.
 
 ARMOR is a free and open source plugin for Elasticsearch which provides security features.
 
+[![Build Status](https://travis-ci.org/petaldevelopment/armor.svg)](https://travis-ci.org/petaldevelopment/armor)
+[![Coverage Status](https://coveralls.io/repos/petaldevelopment/armor/badge.svg?branch=master&service=github)](https://coveralls.io/github/petaldevelopment/armor?branch=master)
+[![Dependency Status](https://www.versioneye.com/user/projects/562ebc6f36d0ab001600165d/badge.svg?style=flat)](https://www.versioneye.com/user/projects/562ebc6f36d0ab001600165d)
+[![License](http://img.shields.io/:license-apache--2.0-blue.svg)](http://www.apache.org/licenses/LICENSE-2.0.html)
+
 ##Features
 * Flexible REST layer access control (User/Role based; on aliases, indices and types)
 * Flexible transport layer access control (User/Role based; on aliases, indices and types)
