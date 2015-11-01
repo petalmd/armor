@@ -184,8 +184,10 @@ public class ArmorActionFilter implements ActionFilter {
             log.trace("Indices opts allowNoIndices {}", ir.indicesOptions().allowNoIndices());
             log.trace("Indices opts expandWildcardsOpen {}", ir.indicesOptions().expandWildcardsOpen());
 
-            ci.addAll(resolveAliases(Arrays.asList(ir.indices())));
-            aliases.addAll(getOnlyAliases(Arrays.asList(ir.indices())));
+            try {
+                ci.addAll(resolveAliases(Arrays.asList(ir.indices())));
+                aliases.addAll(getOnlyAliases(Arrays.asList(ir.indices())));
+            } catch(java.lang.NullPointerException e) {}
 
             if (!allowedForAllIndices && (ir.indices() == null || Arrays.asList(ir.indices()).contains("_all") || ir.indices().length == 0)) {
                 log.error("Attempt from " + request.remoteAddress() + " to _all indices for " + action + " and " + user);
@@ -225,7 +227,7 @@ public class ArmorActionFilter implements ActionFilter {
             }
         }
 
-        if (settings.getAsBoolean(ConfigConstants.ARMOR_ALLOW_NON_LOOPBACK_QUERY_ON_ARMOR_INDEX, true) && ci.contains(settings.get(ConfigConstants.ARMOR_CONFIG_INDEX_NAME, ConfigConstants.DEFAULT_SECURITY_CONFIG_INDEX))) {
+        if (!settings.getAsBoolean(ConfigConstants.ARMOR_ALLOW_NON_LOOPBACK_QUERY_ON_ARMOR_INDEX, false) && ci.contains(settings.get(ConfigConstants.ARMOR_CONFIG_INDEX_NAME, ConfigConstants.DEFAULT_SECURITY_CONFIG_INDEX))) {
             log.error("Attemp from " + request.remoteAddress() + " on " + settings.get(ConfigConstants.ARMOR_CONFIG_INDEX_NAME, ConfigConstants.DEFAULT_SECURITY_CONFIG_INDEX));
             auditListener.onMissingPrivileges(user.getName(), request);
             throw new RuntimeException("Only allowed from localhost (loopback)");
@@ -426,14 +428,13 @@ public class ArmorActionFilter implements ActionFilter {
             final String type = (String) method.invoke(request);
             typesl.add(type);
         } catch (final Exception e) {
-
             try {
                 final Method method = request.getClass().getDeclaredMethod("types");
                 method.setAccessible(true);
                 final String[] types = (String[]) method.invoke(request);
                 typesl.addAll(Arrays.asList(types));
             } catch (final Exception e1) {
-                log.warn("Cannot determine types for {} ({}) due to type[s]() method not found", action, request.getClass());
+                log.debug("Cannot determine types for {} ({}) due to type[s]() method not found", action, request.getClass());
             }
 
         }
