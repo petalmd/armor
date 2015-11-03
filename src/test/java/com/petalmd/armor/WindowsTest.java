@@ -32,19 +32,16 @@ public class WindowsTest extends AbstractScenarioTest {
 
         final Settings settings = ImmutableSettings
                 .settingsBuilder()
+                .put("armor.authentication.http_authenticator", "com.petalmd.armor.authentication.http.waffle.HTTPWaffleAuthenticator")
 
-                .put("armor.authentication.http_authenticator",
-                        "com.petalmd.armor.authentication.http.waffle.HTTPWaffleAuthenticator")
-                        .put("armor.authentication.spnego.login_config_filepath", System.getProperty("java.security.auth.login.config"))
-
-                .put("armor.authentication.authorizer.cache.enable", "false")
-                        .put("armor.authentication.authentication_backend",
-                                "com.petalmd.armor.authentication.backend.simple.AlwaysSucceedAuthenticationBackend")
-                                .put("armor.authentication.authentication_backend.cache.enable", "false")
-                                .put("armor.waffle.windows_auth_provider_impl", MockWindowsAuthProvider.class)
-
+                .put("armor.authentication.spnego.login_config_filepath", System.getProperty("java.security.auth.login.config"))
+                .put("armor.authentication.authentication_backend", "com.petalmd.armor.authentication.backend.simple.AlwaysSucceedAuthenticationBackend")
+                .put("armor.authentication.authentication_backend.cache.enable", "false")
+                .put("armor.waffle.windows_auth_provider_impl", MockWindowsAuthProvider.class)
                 .put("armor.authentication.authorizer", "com.petalmd.armor.authorization.waffle.WaffleAuthorizator")
-                .put("armor.authentication.authentication_backend.cache.enable", "false").build();
+                .put("armor.authentication.authorizer.cache.enable", "false")
+
+                .build();
 
         username = "Guest";
         password = "Guest";

@@ -130,12 +130,13 @@ public class TestScenarios extends AbstractScenarioTest {
                 .put("armor.authentication.authorizer.cache.enable", "true")
                 .put("armor.authentication.authentication_backend.impl",
                         "com.petalmd.armor.authentication.backend.ldap.LDAPAuthenticationBackend")
-                        .put("armor.authentication.authentication_backend.cache.enable", "true")
-                        .putArray("armor.authentication.ldap.host", "localhost:" + ldapServerPort)
-                        .put("armor.authentication.ldap.usersearch", "(uid={0})")
+                .put("armor.authentication.authentication_backend.cache.enable", "true")
+                .putArray("armor.authentication.ldap.host", "localhost:" + ldapServerPort)
+                .put("armor.authentication.ldap.usersearch", "(uid={0})")
                 .put("armor.authentication.ldap.username_attribute", "uid")
-                        .put("armor.authentication.authorization.ldap.rolesearch", "(uniqueMember={0})")
-                        .put("armor.authentication.authorization.ldap.rolename", "cn").build();
+                .put("armor.authentication.authorization.ldap.rolesearch", "(uniqueMember={0})")
+                .put("armor.authentication.authorization.ldap.rolename", "cn")
+                .build();
 
         dlsLdapUserAttribute(settings);
     }
