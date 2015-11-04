@@ -16,7 +16,7 @@
 
     <groupId>com.petalmd</groupId>
     <artifactId>armor</artifactId>
-    <version>1.7.0</version>
+    <version>1.7.1-SNAPSHOT</version>
     <packaging>jar</packaging>
 
     <name>A.R.M.O.R</name>
@@ -56,7 +56,7 @@
         <url>https://github.com/petaldevelopment/armor</url>
         <connection>scm:git:git@github.com:petalmddevelopment/armor</connection>
         <developerConnection>scm:git:git@github.com:petaldevelopment/armor.git</developerConnection>
-      <tag>v1.7.0</tag>
+      <tag>HEAD</tag>
   </scm>
 
     <issueManagement>
