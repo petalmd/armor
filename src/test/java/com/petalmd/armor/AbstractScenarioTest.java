@@ -210,10 +210,10 @@ public abstract class AbstractScenarioTest extends AbstractUnitTest {
             assertJestResultCount(result, 7);
 
             result = executeGet(indices[0], "test", "dummy", false, false).v1();
-            assertJestResultError(result, "Unallowed action RestGetAction");
+            assertJestResultError(result, "ForbiddenException[Forbidden action RestGetAction . Allowed actions: [RestSearchAction]]");
 
             result = executeIndexAsString("{}", indices[0], "test", null, false, false).v1();
-            assertJestResultError(result, "Unallowed action RestIndexAction");
+            assertJestResultError(result, "ForbiddenException[Forbidden action RestIndexAction . Allowed actions: [RestSearchAction]]");
         } else {
 
             JestResult result = executeSearch("ac_query_matchall.json", indices, null, false, false).v1();

@@ -9,7 +9,7 @@ Note: All waffle related options are only valid if your ES node is running on wi
 #armor.enabled: true
 
 # Path where to write/read the armor master key file
-#armor.key_path: .
+#armor.key_path: /var/lib/elasticseach
 
 # When using DLS or FLS and a get or mget is performed then rewrite it as search request
 armor.rewrite_get_as_search: true

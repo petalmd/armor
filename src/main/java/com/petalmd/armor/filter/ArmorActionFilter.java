@@ -48,6 +48,7 @@ import com.petalmd.armor.authentication.AuthException;
 import com.petalmd.armor.authentication.User;
 import com.petalmd.armor.authentication.backend.AuthenticationBackend;
 import com.petalmd.armor.authorization.Authorizator;
+import com.petalmd.armor.authorization.ForbiddenException;
 import com.petalmd.armor.service.ArmorConfigService;
 import com.petalmd.armor.service.ArmorService;
 import com.petalmd.armor.tokeneval.TokenEvaluator;
@@ -55,6 +56,7 @@ import com.petalmd.armor.tokeneval.TokenEvaluator.Evaluator;
 import com.petalmd.armor.tokeneval.TokenEvaluator.FilterAction;
 import com.petalmd.armor.util.ConfigConstants;
 import com.petalmd.armor.util.SecurityUtil;
+
 
 public class ArmorActionFilter implements ActionFilter {
 
@@ -87,6 +89,9 @@ public class ArmorActionFilter implements ActionFilter {
 
         try {
             apply0(action, request, listener, chain);
+        } catch (final ForbiddenException e){
+            log.error("Forbidden while apply() due to {} for action {}", e, e.toString(), action);
+            throw e;
         } catch (final Exception e) {
             log.error("Error while apply() due to {} for action {}", e, e.toString(), action);
             throw new RuntimeException(e);
@@ -194,7 +199,7 @@ public class ArmorActionFilter implements ActionFilter {
                 auditListener.onMissingPrivileges(user == null ? "unknown" : user.getName(), request);
                 //This blocks?
                 //listener.onFailure(new AuthException("Attempt from "+request.remoteAddress()+" to _all indices for " + action + "and "+user));
-                throw new RuntimeException("Attempt from " + request.remoteAddress() + " to _all indices for " + action + " and " + user);
+                throw new ForbiddenException("Attempt from {} to _all indices for {} and {}", request.remoteAddress(), action, user);
 
             }
 
@@ -220,8 +225,7 @@ public class ArmorActionFilter implements ActionFilter {
                     //This blocks?
                     //listener.onFailure(new AuthException("Attempt from "+request.remoteAddress()+" to _all indices for " + action + "and "+user));
                     //break;
-                    throw new RuntimeException("Attempt from " + request.remoteAddress() + " to _all indices for " + action + " and "
-                            + user);
+                    throw new ForbiddenException("Attempt from {} to _all indices for {} and {}", request.remoteAddress(), action, user);
                 }
 
             }
@@ -230,7 +234,7 @@ public class ArmorActionFilter implements ActionFilter {
         if (!settings.getAsBoolean(ConfigConstants.ARMOR_ALLOW_NON_LOOPBACK_QUERY_ON_ARMOR_INDEX, false) && ci.contains(settings.get(ConfigConstants.ARMOR_CONFIG_INDEX_NAME, ConfigConstants.DEFAULT_SECURITY_CONFIG_INDEX))) {
             log.error("Attemp from " + request.remoteAddress() + " on " + settings.get(ConfigConstants.ARMOR_CONFIG_INDEX_NAME, ConfigConstants.DEFAULT_SECURITY_CONFIG_INDEX));
             auditListener.onMissingPrivileges(user.getName(), request);
-            throw new RuntimeException("Only allowed from localhost (loopback)");
+            throw new ForbiddenException("Only allowed from localhost (loopback)");
         }
 
         if (ci.contains("_all")) {
@@ -242,7 +246,7 @@ public class ArmorActionFilter implements ActionFilter {
 
         }
 
-        final InetAddress resolvedAddress = (InetAddress) request.getFromContext("armor_resolved_rest_address");
+        final InetAddress resolvedAddress = request.getFromContext("armor_resolved_rest_address");
 
         if (resolvedAddress == null) {
             //not a rest request
@@ -295,7 +299,7 @@ public class ArmorActionFilter implements ActionFilter {
                         //This blocks?
                         //listener.onFailure(new AuthException("Action '" + action + "' is forbidden due to " + forbiddenAction));
                         //break outer;
-                        throw new RuntimeException("Action '" + action + "' is forbidden due to " + forbiddenAction);
+                        throw new ForbiddenException("Action '{}' is forbidden due to {}", action, forbiddenAction);
 
                     }
                 }
@@ -315,7 +319,7 @@ public class ArmorActionFilter implements ActionFilter {
                 //This blocks?
                 //listener.onFailure(new AuthException("Action '" + action + "' is forbidden due to DEFAULT"));
                 //break outer;
-                throw new RuntimeException("Action '" + action + "' is forbidden due to DEFAULT");
+                throw new ForbiddenException("Action '{}' is forbidden due to DEFAULT", action);
             }
 
             if ("restactionfilter".equals(ft)) {
@@ -346,8 +350,7 @@ public class ArmorActionFilter implements ActionFilter {
                 }
 
                 if (!passall) {
-                    throw new RuntimeException("[" + ft + "." + fn + "] Unallowed action " + simpleClassName + " . Allowed actions: "
-                            + allowedActions);
+                    throw new ForbiddenException("Forbidden action {} . Allowed actions: {}", simpleClassName, allowedActions);
                 }
 
             }
