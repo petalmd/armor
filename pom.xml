@@ -529,7 +529,7 @@
                         <artifactId>maven-gpg-plugin</artifactId>
                         <version>1.6</version>
                         <configuration>
-                            <keyname>51EDB2FE</keyname>
+                            <keyname>37C9160F</keyname>
                         </configuration>
                         <executions>
                             <execution>
