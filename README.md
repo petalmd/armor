@@ -17,8 +17,8 @@ ARMOR is a free and open source plugin for Elasticsearch which provides security
 * HTTP session support through cookies
 * Flexible authentication backends (LDAP(s)/Active Directory, File based, Proxy header, Native Windows through WAFFLE)
 * Flexible authorization backends (LDAP(s)/Active Directory, File based, Native Windows through WAFFLE)
-* Node-to-node encryption through SSL/TLS (Transport layer)
-* Secure REST layer through HTTPS (SSL/TLS)
+* [Node-to-node encryption through SSL/TLS (Transport layer)](/docs/encryption.md)
+* [Secure REST layer through HTTPS (SSL/TLS)](/docs/encryption.md)
 * X-Forwarded-For (XFF) support
 * Audit logging
 * Anonymous login/unauthenticated access
@@ -143,11 +143,11 @@ You have to configure at least on filter.
 ###On which nodes the plugin needs to be installed
 If you use either transport layer SSL or DLS or FLS you have to install it on every node. Otherwise install it on every client node which is exposed to be the entry point into the cluster and on every node which exposes the HTTP REST API. Please note that the ``armor.config_index_name`` must be the same for all nodes in within a cluster.
 
-##Auditlog
+###Auditlog
 Auditlog is stored in Elasticsearch within the _armor_ index (with type _audit_)<br>
 ``curl -XGET 'http://localhost:9200/armor/audit/_search?pretty=true'``
 
-##Rules evaluation
+###Rules evaluation
 Now lets define for which user on which index which filter have to be applied.
 ```javascript
 {
@@ -308,7 +308,7 @@ Everywhere a simple wildcard (*) can be used.
 
 To make the rule apply all present attributes (users, roles, hosts, indices, aliases) must match. An attribute which is missing or is empty does always match. An attribute only containing the wildcard sign (*) does also match always.
 
-### No automatic multi index filters
+#### No automatic multi index filters
 If you access more than one index (e.g. search in multiple indices) only rules will match when they list all the indices (or "*”). So for a multi index search on the indices _marketing_ and _finance_ a rules have to look like:
 
 ```javascript
@@ -323,7 +323,17 @@ If you access more than one index (e.g. search in multiple indices) only rules w
 ```
 You can circumvent this by using aliases.
 
-###License
+## Integration
+### Kibana
+See the documentation for [Kibana 4.2](/docs/kibana.md)
+
+## Roadmap
+TODO
+
+## Community
+Contributions, questions, and comments are all welcomed and encouraged!
+
+## License
 Copyright 2015 PetalMD
 
 Licensed under the Apache License, Version 2.0 (the "License");
