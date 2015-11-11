@@ -4,6 +4,7 @@
 ```
 $ keytool -genkey -alias server_name -keyalg RSA -keypass test123 -storepass test123 -keystore keystore.jks
 What is your first and last name?
+<<<<<<< HEAD
   []: Julien Maitrehenry
 What is the name of your organizational unit?
   []: DevOps
@@ -59,7 +60,7 @@ Certificate was added to keystore
 ```
 
 ## Node <> node Encryption (transport)
-```yaml
+```YAML
 # elasticsearch/elasticsearch.yml
 #--------------------------------
 
@@ -81,7 +82,6 @@ armor.ssl.transport.node.encforce_hostname_verification.resolve_host_name: false
 ```
 
 ## Client <> node (REST API)
-WIP
 
 ```YAML
 # elasticsearch/elasticsearch.yml
