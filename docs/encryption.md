@@ -4,32 +4,36 @@
 ```
 $ keytool -genkey -alias server_name -keyalg RSA -keypass test123 -storepass test123 -keystore keystore.jks
 What is your first and last name?
-  [Julien Maitrehenry]:
+  []: Julien Maitrehenry
 What is the name of your organizational unit?
-  [DevOps]:
+  []: DevOps
 What is the name of your organization?
-  [PetalMD]:
+  []: PetalMD
 What is the name of your City or Locality?
-  [Quebec]:
+  []: Quebec City
 What is the name of your State or Province?
-  [QC]:
+  []: QC
 What is the two-letter country code for this unit?
-  [CA]:
-Is CN=Julien Maitrehenry, OU=DevOps, O=PetalMD, L=Quebec, ST=QC, C=CA correct?
+  []: CA
+Is CN=Julien Maitrehenry, OU=DevOps, O=PetalMD, L=Quebec City, ST=QC, C=CA correct?
   [no]:  yes
 ```
 
 ### Export generated certificate (server.cer)
+You can use the same certificate on all node, but having one certificate per node is better and give you opportinity to revoke one without having all node down.
+
 ```
 $ keytool -export -alias server_name -storepass test123 -file server.cer -keystore keystore.jks
 Certificate stored in file <server.cer>
 ```
 
 ### Add certificate to truststore file (cacerts.jks)
+You need to add all node certificates on the trust store and install the same truststore on all node.
+
 ```
 $ keytool -import -v -trustcacerts -alias server_name -file server.cer -keystore cacerts.jks -keypass test123 -storepass test987
-Owner: CN=Julien Maitrehenry, OU=DevOps, O=PetalMD, L=Quebec, ST=QC, C=CA
-Issuer: CN=Julien Maitrehenry, OU=DevOps, O=PetalMD, L=Quebec, ST=QC, C=CA
+Owner: CN=Julien Maitrehenry, OU=DevOps, O=PetalMD, L=Quebec City, ST=QC, C=CA
+Issuer: CN=Julien Maitrehenry, OU=DevOps, O=PetalMD, L=Quebec City, ST=QC, C=CA
 Serial number: 5927721d
 Valid from: Wed Nov 11 14:09:46 EST 2015 until: Tue Feb 09 14:09:46 EST 2016
 Certificate fingerprints:
@@ -55,7 +59,7 @@ Certificate was added to keystore
 ```
 
 ## Node <> node Encryption (transport)
-```YAML
+```yaml
 # elasticsearch/elasticsearch.yml
 #--------------------------------
 
