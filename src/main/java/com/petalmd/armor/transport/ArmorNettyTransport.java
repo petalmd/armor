@@ -46,14 +46,14 @@ public class ArmorNettyTransport extends NettyTransport {
     }
 
     @Override
-    public org.elasticsearch.common.netty.channel.ChannelPipelineFactory configureClientChannelPipelineFactory() {
-        return new SearchGuardClientChannelPipelineFactory(this);
+    public org.jboss.netty.channel.ChannelPipelineFactory configureClientChannelPipelineFactory() {
+        return new ArmorClientChannelPipelineFactory(this);
     }
 
     @Override
-    public org.elasticsearch.common.netty.channel.ChannelPipelineFactory configureServerChannelPipelineFactory(final String name,
+    public org.jboss.netty.channel.ChannelPipelineFactory configureServerChannelPipelineFactory(final String name,
             final Settings settings) {
-        return new SearchGuardServerChannelPipelineFactory(this, name, settings);
+        return new ArmorServerChannelPipelineFactory(this, name, settings);
     }
 
     protected boolean isClient() {
@@ -76,37 +76,37 @@ public class ArmorNettyTransport extends NettyTransport {
         super.sendRequest(node, requestId, action, request, options);
     }
 
-    protected static class SearchGuardServerChannelPipelineFactory extends ServerChannelPipelineFactory {
+    protected static class ArmorServerChannelPipelineFactory extends ServerChannelPipelineFactory {
 
         protected final NettyTransport nettyTransport;
-        protected static final ESLogger log = Loggers.getLogger(SearchGuardServerChannelPipelineFactory.class);
+        protected static final ESLogger log = Loggers.getLogger(ArmorServerChannelPipelineFactory.class);
 
-        public SearchGuardServerChannelPipelineFactory(final NettyTransport nettyTransport, final String name, final Settings settings) {
+        public ArmorServerChannelPipelineFactory(final NettyTransport nettyTransport, final String name, final Settings settings) {
             super(nettyTransport, name, settings);
             this.nettyTransport = nettyTransport;
         }
 
         @Override
-        public org.elasticsearch.common.netty.channel.ChannelPipeline getPipeline() throws Exception {
-            final org.elasticsearch.common.netty.channel.ChannelPipeline pipeline = super.getPipeline();
+        public org.jboss.netty.channel.ChannelPipeline getPipeline() throws Exception {
+            final org.jboss.netty.channel.ChannelPipeline pipeline = super.getPipeline();
             pipeline.replace("dispatcher", "dispatcher", new ArmorMessageChannelHandler(nettyTransport, log));
             return pipeline;
         }
     }
 
-    protected static class SearchGuardClientChannelPipelineFactory extends ClientChannelPipelineFactory {
+    protected static class ArmorClientChannelPipelineFactory extends ClientChannelPipelineFactory {
 
         protected final NettyTransport nettyTransport;
-        protected static final ESLogger log = Loggers.getLogger(SearchGuardClientChannelPipelineFactory.class);
+        protected static final ESLogger log = Loggers.getLogger(ArmorClientChannelPipelineFactory.class);
 
-        public SearchGuardClientChannelPipelineFactory(final NettyTransport nettyTransport) {
+        public ArmorClientChannelPipelineFactory(final NettyTransport nettyTransport) {
             super(nettyTransport);
             this.nettyTransport = nettyTransport;
         }
 
         @Override
-        public org.elasticsearch.common.netty.channel.ChannelPipeline getPipeline() throws Exception {
-            final org.elasticsearch.common.netty.channel.ChannelPipeline pipeline = super.getPipeline();
+        public org.jboss.netty.channel.ChannelPipeline getPipeline() throws Exception {
+            final org.jboss.netty.channel.ChannelPipeline pipeline = super.getPipeline();
             pipeline.replace("dispatcher", "dispatcher", new ArmorMessageChannelHandler(nettyTransport, log));
             return pipeline;
         }

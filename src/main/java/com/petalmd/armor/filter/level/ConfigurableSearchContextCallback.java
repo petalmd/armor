@@ -17,30 +17,20 @@
 
 package com.petalmd.armor.filter.level;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.Iterator;
-import java.util.List;
+import java.util.*;
 
 import org.apache.directory.api.ldap.model.entry.Attribute;
 import org.apache.directory.api.ldap.model.entry.Entry;
 import org.apache.directory.api.ldap.model.exception.LdapInvalidAttributeValueException;
 import org.apache.lucene.index.Term;
 import org.apache.lucene.queries.TermFilter;
-import org.apache.lucene.search.FieldValueFilter;
-import org.apache.lucene.search.Filter;
+import org.apache.lucene.search.*;
 import org.elasticsearch.ElasticsearchException;
-import org.elasticsearch.common.collect.ImmutableMap;
 import org.elasticsearch.common.logging.ESLogger;
 import org.elasticsearch.common.logging.Loggers;
-import org.elasticsearch.common.lucene.search.AndFilter;
-import org.elasticsearch.common.lucene.search.NotFilter;
-import org.elasticsearch.common.lucene.search.OrFilter;
+import org.elasticsearch.common.lucene.search.Queries;
 import org.elasticsearch.common.settings.Settings;
 import org.elasticsearch.index.query.ParsedFilter;
-import org.elasticsearch.search.fetch.partial.PartialFieldsContext;
-import org.elasticsearch.search.fetch.partial.PartialFieldsContext.PartialField;
 import org.elasticsearch.search.fetch.source.FetchSourceContext;
 import org.elasticsearch.search.internal.SearchContext;
 import org.elasticsearch.search.internal.ShardSearchRequest;
@@ -138,10 +128,6 @@ public class ConfigurableSearchContextCallback implements SearchContextCallback 
             }
 
             //here we know that we either have a non null user or an internally authenticated internode request
-
-            //log.debug("filterNames {}", filterNames);
-            //log.debug("filterTypes {}", filterTypes);
-
             log.trace("filter for {}", filter);
 
             for (int i = 0; i < filter.size(); i++) {
@@ -173,7 +159,7 @@ public class ConfigurableSearchContextCallback implements SearchContextCallback 
                     //log.trace("filterStrings {}", list);
 
                     final ParsedFilter origfilter = context.parsedPostFilter();
-                    final List<Filter> fliste = new ArrayList<Filter>();
+                    final List<Query> qliste = new ArrayList<Query>();
 
                     if (list.isEmpty()) {
                         continue;
@@ -190,9 +176,9 @@ public class ConfigurableSearchContextCallback implements SearchContextCallback 
                             final boolean negate = Boolean.parseBoolean(list.get(3));
 
                             if (negate) {
-                                fliste.add(new NotFilter(new TermFilter(new Term(list.get(1), list.get(2)))));
+                                qliste.add(org.elasticsearch.common.lucene.search.Queries.not(new QueryWrapperFilter(new TermQuery(new Term(list.get(1), list.get(2))))));
                             } else {
-                                fliste.add(new TermFilter(new Term(list.get(1), list.get(2))));
+                                qliste.add(new QueryWrapperFilter(new TermQuery(new Term(list.get(1), list.get(2)))));
                             }
 
                         }
@@ -209,9 +195,9 @@ public class ConfigurableSearchContextCallback implements SearchContextCallback 
                             final String username = user.getName();
 
                             if (negate) {
-                                fliste.add(new NotFilter(new TermFilter(new Term(field, username))));
+                                qliste.add(org.elasticsearch.common.lucene.search.Queries.not(new QueryWrapperFilter(new TermQuery(new Term(field, username)))));
                             } else {
-                                fliste.add(new TermFilter(new Term(field, username)));
+                                qliste.add(new QueryWrapperFilter(new TermQuery(new Term(field, username))));
                             }
 
                         }
@@ -226,23 +212,29 @@ public class ConfigurableSearchContextCallback implements SearchContextCallback 
                             final String field = list.get(1);
                             final boolean negate = Boolean.parseBoolean(list.get(2));
 
-                            final List<Filter> inner = new ArrayList<Filter>();
+                            final List<Query> inner = new ArrayList<Query>();
                             for (final Iterator iterator = user.getRoles().iterator(); iterator.hasNext();) {
                                 final String role = (String) iterator.next();
 
                                 if (negate) {
-                                    inner.add(new NotFilter(new TermFilter(new Term(field, role))));
+                                    inner.add(Queries.not(
+                                            (new QueryWrapperFilter(new TermQuery(new Term(field, role)))).getQuery()
+                                    ));
                                 } else {
-                                    inner.add(new TermFilter(new Term(field, role)));
+                                    inner.add(new QueryWrapperFilter(new TermQuery(new Term(field, role))));
                                 }
 
                             }
-                            if (negate) {
-                                fliste.add(new AndFilter(inner));
-                            } else {
-                                fliste.add(new OrFilter(inner));
-                            }
 
+                            BooleanQuery boolQuery = new BooleanQuery();
+                            for (Query innerFilter : inner) {
+                                if (negate) {
+                                    boolQuery.add(innerFilter, BooleanClause.Occur.MUST);
+                                } else {
+                                    boolQuery.add(innerFilter, BooleanClause.Occur.SHOULD);
+                                }
+                            }
+                            qliste.add(new QueryWrapperFilter(boolQuery));
                         }
                             ;
                             break;
@@ -269,9 +261,9 @@ public class ConfigurableSearchContextCallback implements SearchContextCallback 
 
                             try {
                                 if (negate) {
-                                    fliste.add(new NotFilter(new TermFilter(new Term(field, attr.getString()))));
+                                    qliste.add(org.elasticsearch.common.lucene.search.Queries.not(new TermFilter(new Term(field, attr.getString()))));
                                 } else {
-                                    fliste.add(new TermFilter(new Term(field, attr.getString())));
+                                    qliste.add(new QueryWrapperFilter(new TermQuery(new Term(field, attr.getString()))));
                                 }
                             } catch (final LdapInvalidAttributeValueException e) {
                                 //no-op
@@ -296,44 +288,51 @@ public class ConfigurableSearchContextCallback implements SearchContextCallback 
                             final String attribute = list.get(2);
                             final boolean negate = Boolean.parseBoolean(list.get(3));
 
-                            final List<Filter> inner = new ArrayList<Filter>();
+                            final List<Query> inner = new ArrayList<Query>();
                             for (final Iterator<Entry> iterator = ldapUser.getRoleEntries().iterator(); iterator.hasNext();) {
                                 final Entry roleEntry = iterator.next();
 
                                 try {
+                                    org.elasticsearch.common.lucene.search.Queries.not(
+                                        new TermQuery(
+                                            new Term(field, roleEntry.get(attribute).getString())
+                                        )
+                                    );
                                     if (negate) {
-                                        inner.add(new NotFilter(new TermFilter(new Term(field, roleEntry.get(attribute).getString()))));
+                                        inner.add(org.elasticsearch.common.lucene.search.Queries.not(new QueryWrapperFilter(new TermQuery((new Term(field, roleEntry.get(attribute).getString()))))));
                                     } else {
-                                        inner.add(new TermFilter(new Term(field, roleEntry.get(attribute).getString())));
+                                        inner.add(new QueryWrapperFilter(new TermQuery(new Term(field, roleEntry.get(attribute).getString()))));
                                     }
                                 } catch (final LdapInvalidAttributeValueException e) {
                                     //no-op
                                 }
 
                             }
-                            if (negate) {
-                                fliste.add(new AndFilter(inner));
-                            } else {
-                                fliste.add(new OrFilter(inner));
-                            }
 
+                            BooleanQuery boolQuery = new BooleanQuery();
+                            for (Query innerFilter : inner) {
+                                if (negate) {
+                                   boolQuery.add(innerFilter, BooleanClause.Occur.MUST);
+                                } else {
+                                    boolQuery.add(innerFilter, BooleanClause.Occur.SHOULD);
+                                }
+                            }
+                            qliste.add(new QueryWrapperFilter(boolQuery));
                         }
                             ;
                             break;
                         case "exists": {
-                            fliste.add(new FieldValueFilter(list.get(1), Boolean.parseBoolean(list.get(2))));
+                            qliste.add(new FieldValueFilter(list.get(1), Boolean.parseBoolean(list.get(2))));
                         }
                             ;
                             break;
                     }
 
-                    //log.trace("dls extra filters {}", fliste);
-
                     if (origfilter == null) {
-                        context.parsedPostFilter(new ParsedFilter(new AndFilter(fliste), ImmutableMap.<String, Filter> builder().build()));
+                        context.parsedPostFilter(new ParsedFilter(new AndFilter(qliste), Map.<String, Filter> builder().build()));
                     } else {
-                        fliste.add(origfilter.filter());
-                        context.parsedPostFilter(new ParsedFilter(new AndFilter(fliste), origfilter.namedFilters()));
+                        qliste.add(origfilter.filter());
+                        context.parsedPostFilter(new ParsedFilter(new AndFilter(qliste), origfilter.namedFilters()));
                     }
 
                 }
@@ -380,40 +379,40 @@ public class ConfigurableSearchContextCallback implements SearchContextCallback 
                         fields.retainAll(survivingFields);
                     }
 
-                    if (context.hasPartialFields()) {
-                        fieldsDone = true;
-                        final PartialFieldsContext partialFieldsContext = context.partialFields();
-                        final List<PartialField> partialFields = partialFieldsContext.fields();
-                        final List<PartialField> survivingFields = new ArrayList<PartialField>(partialFields);
-                        for (final Iterator<PartialField> iterator = partialFields.iterator(); iterator.hasNext();) {
-                            final PartialField field = iterator.next();
-
-                            for (final Iterator<String> iteratorExcludes = sourceExcludes.iterator(); iteratorExcludes.hasNext();) {
-                                final String exclude = iteratorExcludes.next();
-                                final String[] fieldExcludes = field.includes();
-
-                                for (int j = 0; j < fieldExcludes.length; j++) {
-                                    if (SecurityUtil.isWildcardMatch(fieldExcludes[j], exclude, false)) {
-                                        survivingFields.remove(field);
-                                    }
-                                }
-                            }
-
-                            /*for (Iterator<String> iteratorIncludes = sourceIncludes.iterator(); iteratorIncludes.hasNext();) {
-                                String include = iteratorIncludes.next();
-                                if(SecurityUtil.isWildcardMatch(field, include, false)) {
-                                    if(!survivingFields.contains(field)) {
-                                        survivingFields.add(field);
-                                    }
-                                }
-
-                            }*/
-
-                        }
-
-                        log.trace("survivingPartialFields {}", survivingFields.equals(partialFields) ? "-all-" : survivingFields.toString());
-                        partialFields.retainAll(survivingFields);
-                    }
+//                    if (context.hasPartialFields()) {
+//                        fieldsDone = true;
+//                        final PartialFieldsContext partialFieldsContext = context.partialFields();
+//                        final List<PartialField> partialFields = partialFieldsContext.fields();
+//                        final List<PartialField> survivingFields = new ArrayList<PartialField>(partialFields);
+//                        for (final Iterator<PartialField> iterator = partialFields.iterator(); iterator.hasNext();) {
+//                            final PartialField field = iterator.next();
+//
+//                            for (final Iterator<String> iteratorExcludes = sourceExcludes.iterator(); iteratorExcludes.hasNext();) {
+//                                final String exclude = iteratorExcludes.next();
+//                                final String[] fieldExcludes = field.includes();
+//
+//                                for (int j = 0; j < fieldExcludes.length; j++) {
+//                                    if (SecurityUtil.isWildcardMatch(fieldExcludes[j], exclude, false)) {
+//                                        survivingFields.remove(field);
+//                                    }
+//                                }
+//                            }
+//
+//                            /*for (Iterator<String> iteratorIncludes = sourceIncludes.iterator(); iteratorIncludes.hasNext();) {
+//                                String include = iteratorIncludes.next();
+//                                if(SecurityUtil.isWildcardMatch(field, include, false)) {
+//                                    if(!survivingFields.contains(field)) {
+//                                        survivingFields.add(field);
+//                                    }
+//                                }
+//
+//                            }*/
+//
+//                        }
+//
+//                        log.trace("survivingPartialFields {}", survivingFields.equals(partialFields) ? "-all-" : survivingFields.toString());
+//                        partialFields.retainAll(survivingFields);
+//                    }
 
                     //TODO FUTURE include exclude precedence, what if null or empty?
 
