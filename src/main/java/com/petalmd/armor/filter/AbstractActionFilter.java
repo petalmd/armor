@@ -170,7 +170,6 @@ public abstract class AbstractActionFilter implements ActionFilter {
     protected SearchRequest toSearchRequest(final GetRequest request) {
 
         final SearchRequest searchRequest = new SearchRequest();
-        searchRequest.listenerThreaded(false);
         searchRequest.routing(request.routing());
         searchRequest.copyContextFrom(request);
         searchRequest.preference(request.preference());
@@ -185,7 +184,6 @@ public abstract class AbstractActionFilter implements ActionFilter {
 
         final MultiSearchRequest msearch = new MultiSearchRequest();
         msearch.copyContextFrom(multiGetRequest);
-        msearch.listenerThreaded(multiGetRequest.listenerThreaded());
 
         for (final Iterator<Item> iterator = multiGetRequest.iterator(); iterator.hasNext();) {
             final Item item = iterator.next();
@@ -194,7 +192,6 @@ public abstract class AbstractActionFilter implements ActionFilter {
             st.routing(item.routing());
             st.indices(item.indices());
             st.types(item.type());
-            st.listenerThreaded(false);
             st.preference(multiGetRequest.preference());
             st.source(SearchSourceBuilder.searchSource().query(new IdsQueryBuilder(item.type()).addIds(item.id())));
             msearch.add(st);

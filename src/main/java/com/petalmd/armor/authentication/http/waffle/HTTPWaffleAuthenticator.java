@@ -19,11 +19,11 @@ package com.petalmd.armor.authentication.http.waffle;
 
 import java.net.InetSocketAddress;
 
+import org.apache.lucene.util.Constants;
 import org.elasticsearch.ElasticsearchException;
 import org.elasticsearch.common.inject.Inject;
 import org.elasticsearch.common.logging.ESLogger;
 import org.elasticsearch.common.logging.Loggers;
-import org.elasticsearch.common.os.OsUtils;
 import org.elasticsearch.common.settings.Settings;
 import org.elasticsearch.rest.BytesRestResponse;
 import org.elasticsearch.rest.RestChannel;
@@ -56,7 +56,7 @@ public class HTTPWaffleAuthenticator implements HTTPAuthenticator {
 
         this.authProvider = authProvider;
 
-        if (!OsUtils.WINDOWS) {
+        if (!Constants.WINDOWS) {
             throw new ElasticsearchException("Waffle works only on Windows operating system, not on " + System.getProperty("os.name"));
         }
 

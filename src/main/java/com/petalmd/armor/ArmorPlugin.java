@@ -28,15 +28,14 @@ import javassist.CtNewMethod;
 
 import org.elasticsearch.ElasticsearchException;
 import org.elasticsearch.action.ActionModule;
-import org.elasticsearch.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableList;
 import org.elasticsearch.common.component.LifecycleComponent;
 import org.elasticsearch.common.inject.Module;
-import org.elasticsearch.common.lang3.StringUtils;
+import org.apache.commons.lang.StringUtils;
 import org.elasticsearch.common.logging.ESLogger;
 import org.elasticsearch.common.logging.Loggers;
-import org.elasticsearch.common.settings.ImmutableSettings;
 import org.elasticsearch.common.settings.Settings;
-import org.elasticsearch.plugins.AbstractPlugin;
+import org.elasticsearch.plugins.Plugin;
 import org.elasticsearch.rest.RestModule;
 
 import com.petalmd.armor.filter.DLSActionFilter;
@@ -56,13 +55,7 @@ import com.petalmd.armor.util.ConfigConstants;
 //TODO FUTURE special handling scroll searches
 //TODO FUTURE negative rules/users in acrules
 //TODO update some settings during runtime
-public final class ArmorPlugin extends AbstractPlugin {
-
-    @Override
-    public void processModule(final Module module) {
-        super.processModule(module);
-    }
-
+public final class ArmorPlugin extends Plugin {
     private static final String ARMOR_DEBUG = "armor.debug";
     private static final String CLIENT_TYPE = "client.type";
     private static final String HTTP_TYPE = "http.type";
@@ -134,7 +127,6 @@ public final class ArmorPlugin extends AbstractPlugin {
     }
 
     @SuppressWarnings("rawtypes")
-    @Override
     public Collection<Class<? extends LifecycleComponent>> services() {
 
         if (enabled && !client) {
@@ -144,7 +136,6 @@ public final class ArmorPlugin extends AbstractPlugin {
     }
 
     @SuppressWarnings("rawtypes")
-    @Override
     public Collection<Class<? extends Module>> modules() {
         if (enabled && !client) {
             return ImmutableList.<Class<? extends Module>> of(AuthModule.class);
@@ -156,7 +147,7 @@ public final class ArmorPlugin extends AbstractPlugin {
     public Settings additionalSettings() {
         if (enabled) {
             checkSSLConfig();
-            final org.elasticsearch.common.settings.ImmutableSettings.Builder builder = ImmutableSettings.settingsBuilder();
+            final org.elasticsearch.common.settings.Settings.Builder builder = Settings.settingsBuilder();
             if (settings.getAsBoolean(ConfigConstants.ARMOR_SSL_TRANSPORT_NODE_ENABLED, false)) {
                 builder.put(ArmorPlugin.TRANSPORT_TYPE, client ? SSLClientNettyTransport.class : SSLNettyTransport.class);
             } else if (!client) {
@@ -177,7 +168,7 @@ public final class ArmorPlugin extends AbstractPlugin {
 
             return builder.build();
         } else {
-            return ImmutableSettings.Builder.EMPTY_SETTINGS;
+            return Settings.Builder.EMPTY_SETTINGS;
         }
     }
 

@@ -30,10 +30,10 @@ import javax.net.ssl.TrustManagerFactory;
 
 import org.elasticsearch.Version;
 import org.elasticsearch.common.inject.Inject;
-import org.elasticsearch.common.netty.channel.ChannelHandlerContext;
-import org.elasticsearch.common.netty.channel.ChannelStateEvent;
-import org.elasticsearch.common.netty.channel.SimpleChannelHandler;
-import org.elasticsearch.common.netty.handler.ssl.SslHandler;
+import org.jboss.netty.channel.ChannelHandlerContext;
+import org.jboss.netty.channel.ChannelStateEvent;
+import org.jboss.netty.channel.SimpleChannelHandler;
+import org.jboss.netty.handler.ssl.SslHandler;
 import org.elasticsearch.common.network.NetworkService;
 import org.elasticsearch.common.settings.Settings;
 import org.elasticsearch.common.util.BigArrays;
@@ -53,13 +53,13 @@ public class SSLNettyTransport extends ArmorNettyTransport {
     }
 
     @Override
-    public org.elasticsearch.common.netty.channel.ChannelPipelineFactory configureClientChannelPipelineFactory() {
+    public org.jboss.netty.channel.ChannelPipelineFactory configureClientChannelPipelineFactory() {
         logger.debug("Node client configured for SSL");
         return new SSLClientChannelPipelineFactory(this, this.settings);
     }
 
     @Override
-    public org.elasticsearch.common.netty.channel.ChannelPipelineFactory configureServerChannelPipelineFactory(final String name,
+    public org.jboss.netty.channel.ChannelPipelineFactory configureServerChannelPipelineFactory(final String name,
             final Settings settings) {
         logger.debug("Node server configured for SSL");
         return new SSLServerChannelPipelineFactory(this, name, settings, this.settings);
@@ -90,8 +90,8 @@ public class SSLNettyTransport extends ArmorNettyTransport {
         }
 
         @Override
-        public org.elasticsearch.common.netty.channel.ChannelPipeline getPipeline() throws Exception {
-            final org.elasticsearch.common.netty.channel.ChannelPipeline pipeline = super.getPipeline();
+        public org.jboss.netty.channel.ChannelPipeline getPipeline() throws Exception {
+            final org.jboss.netty.channel.ChannelPipeline pipeline = super.getPipeline();
 
             TrustManagerFactory tmf = null;
 
@@ -202,8 +202,8 @@ public class SSLNettyTransport extends ArmorNettyTransport {
         }
 
         @Override
-        public org.elasticsearch.common.netty.channel.ChannelPipeline getPipeline() throws Exception {
-            final org.elasticsearch.common.netty.channel.ChannelPipeline pipeline = super.getPipeline();
+        public org.jboss.netty.channel.ChannelPipeline getPipeline() throws Exception {
+            final org.jboss.netty.channel.ChannelPipeline pipeline = super.getPipeline();
 
             //## Truststore ##
             final KeyStore ts = KeyStore.getInstance(truststoreType);
