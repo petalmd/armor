@@ -83,7 +83,7 @@ public abstract class AbstractActionFilter implements ActionFilter {
         log.debug("Context {}", request.getContext());
         log.debug("Headers {}", request.getHeaders());
 
-        if (action.startsWith("cluster:monitor/")) {
+        if (settings.getAsBoolean(ConfigConstants.ARMOR_ALLOW_CLUSTER_MONITOR, true) && action.startsWith("cluster:monitor/")) {
             chain.proceed(action, request, listener);
             return;
         }
