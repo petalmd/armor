@@ -14,7 +14,6 @@
  * limitations under the License.
  * 
  */
-
 package com.petalmd.armor;
 
 import io.searchbox.client.JestClient;
@@ -24,16 +23,15 @@ import io.searchbox.indices.mapping.PutMapping;
 import java.util.Map;
 
 import org.apache.http.HttpResponse;
-import org.elasticsearch.ElasticsearchException;
 import org.elasticsearch.common.collect.Tuple;
 import org.elasticsearch.common.settings.ImmutableSettings;
 import org.elasticsearch.common.settings.Settings;
 import org.junit.Assert;
 import org.junit.Test;
 
-import com.petalmd.armor.service.ArmorService;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
+import io.searchbox.cluster.NodesStats;
 
 public class MiscTest extends AbstractUnitTest {
 
@@ -53,7 +51,6 @@ public class MiscTest extends AbstractUnitTest {
                         "com.petalmd.armor.authentication.http.HTTPUnauthenticatedAuthenticator")
                 .put("armor.authentication.authentication_backend.impl",
                         "com.petalmd.armor.authentication.backend.simple.AlwaysSucceedAuthenticationBackend")
-
                 .build();
 
         startES(settings);
@@ -62,7 +59,7 @@ public class MiscTest extends AbstractUnitTest {
         password = null;
 
         setupTestData("ac_rules_3.json");
-        final Tuple<JestResult, HttpResponse> resulttu = executeSearch("ac_query_matchall.json", new String[] { "internal" }, null, true,
+        final Tuple<JestResult, HttpResponse> resulttu = executeSearch("ac_query_matchall.json", new String[]{"internal"}, null, true,
                 false);
 
         final JestResult result = resulttu.v1();
@@ -70,6 +67,42 @@ public class MiscTest extends AbstractUnitTest {
         final Gson gson = new GsonBuilder().setPrettyPrinting().create();
         final Map json = gson.fromJson(result.getJsonString(), Map.class);
         log.debug(gson.toJson(json));
+
+    }
+
+    @Test
+    public void testClusterMonitorDisable() throws Exception {
+
+        final Settings settings = ImmutableSettings
+                .settingsBuilder()
+                .putArray("armor.actionrequestfilter.names", "allowHealth")
+                .putArray("armor.actionrequestfilter.allowHealth.allowed_actions", "cluster:monitor/health")
+                .put("armor.allow_cluster_monitor", false)
+                .putArray("armor.authentication.authorization.settingsdb.roles.jacksonm", "root")
+                .put("armor.authentication.settingsdb.user.jacksonm", "secret")
+                .put("armor.authentication.authorizer.impl",
+                        "com.petalmd.armor.authorization.simple.SettingsBasedAuthorizator")
+                .put("armor.authentication.authorizer.cache.enable", "true")
+                .put("armor.authentication.authentication_backend.impl",
+                        "com.petalmd.armor.authentication.backend.simple.SettingsBasedAuthenticationBackend")
+                .put("armor.authentication.authentication_backend.cache.enable", "true")
+                .build();
+
+        startES(settings);
+
+        username = "jacksonm";
+        password = "secret";
+
+        setupTestData("ac_rules_execute_all.json");
+        executeIndex("ac_rules_execute_all.json", "armor", "ac", "ac", true, true);
+
+        final JestClient client = getJestClient(getServerUri(false), username, password);
+
+        final JestResult jr = client.execute(new NodesStats.Builder().setHeader(headers).build());
+
+        log.debug(jr.getErrorMessage());
+        Assert.assertNotNull(jr.getErrorMessage());
+        Assert.assertTrue(jr.getErrorMessage().contains("cluster:monitor"));
 
     }
 
@@ -82,13 +115,12 @@ public class MiscTest extends AbstractUnitTest {
                 .put("armor.authentication.settingsdb.user.jacksonm", "secret")
                 .put("armor.authentication.authorizer.impl",
                         "com.petalmd.armor.authorization.simple.SettingsBasedAuthorizator")
-                        .put("armor.authentication.authorizer.cache.enable", "true")
-                        .put("armor.authentication.authentication_backend.impl",
-                                "com.petalmd.armor.authentication.backend.simple.SettingsBasedAuthenticationBackend")
+                .put("armor.authentication.authorizer.cache.enable", "true")
+                .put("armor.authentication.authentication_backend.impl",
+                        "com.petalmd.armor.authentication.backend.simple.SettingsBasedAuthenticationBackend")
                 .put("armor.authentication.authentication_backend.cache.enable", "true")
-
                 .putArray("armor.restactionfilter.names", "readonly")
-                                .putArray("armor.restactionfilter.readonly.allowed_actions", "RestSearchAction").build();
+                .putArray("armor.restactionfilter.readonly.allowed_actions", "RestSearchAction").build();
 
         startES(settings);
         username = "jacksonm";
@@ -102,7 +134,6 @@ public class MiscTest extends AbstractUnitTest {
 
         final JestResult jr = client.execute(new PutMapping.Builder("_all", "ac", "\"ac\" : {" + "\"properties\" : {"
                 + "\"rules\" : {\"type\" : \"string\", \"store\" : true }" + "}" + "}"
-
         ).setHeader(headers).build());
 
         Assert.assertNotNull(jr.getErrorMessage());
