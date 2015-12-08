@@ -17,10 +17,8 @@
 
 package com.petalmd.armor;
 
-import org.elasticsearch.common.settings.ImmutableSettings;
 import org.elasticsearch.common.settings.Settings;
 import org.junit.Test;
-
 import waffle.mock.MockWindowsAuthProvider;
 
 public class WindowsTest extends AbstractScenarioTest {
@@ -30,7 +28,7 @@ public class WindowsTest extends AbstractScenarioTest {
 
         useSpnego = true;
 
-        final Settings settings = ImmutableSettings
+        final Settings settings = Settings
                 .settingsBuilder()
                 .put("armor.authentication.http_authenticator", "com.petalmd.armor.authentication.http.waffle.HTTPWaffleAuthenticator")
 
@@ -46,7 +44,7 @@ public class WindowsTest extends AbstractScenarioTest {
         username = "Guest";
         password = "Guest";
 
-        searchOnlyAllowed(settings, false);
+        searchOnlyAllowed(settings, false, true);
     }
 
 }

@@ -17,16 +17,12 @@
 
 package com.petalmd.armor.http.netty;
 
-import java.net.SocketAddress;
-import java.security.Principal;
-
-import org.jboss.netty.channel.Channel;
-import org.jboss.netty.channel.ChannelFuture;
-import org.jboss.netty.channel.ChannelHandlerContext;
-import org.jboss.netty.channel.MessageEvent;
-import org.jboss.netty.channel.SimpleChannelHandler;
+import org.jboss.netty.channel.*;
 import org.jboss.netty.handler.codec.http.DefaultHttpRequest;
 import org.jboss.netty.handler.ssl.SslHandler;
+
+import java.net.SocketAddress;
+import java.security.Principal;
 
 public class MutualSSLHandler extends SimpleChannelHandler {
 

@@ -17,16 +17,14 @@
 
 package com.petalmd.armor;
 
-import javax.net.ssl.SSLHandshakeException;
-
+import com.petalmd.armor.util.SecurityUtil;
 import org.apache.http.NoHttpResponseException;
-import org.elasticsearch.common.settings.ImmutableSettings;
 import org.elasticsearch.common.settings.Settings;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;
 
-import com.petalmd.armor.util.SecurityUtil;
+import javax.net.ssl.SSLHandshakeException;
 
 public class SslTest extends AbstractScenarioTest {
 
@@ -38,7 +36,7 @@ public class SslTest extends AbstractScenarioTest {
 
         enableSSL = true;
 
-        final Settings settings = ImmutableSettings
+        final Settings settings = Settings
                 .settingsBuilder()
                 .putArray("armor.authentication.authorization.settingsdb.roles.jacksonm", "ceo")
                 .put("armor.authentication.settingsdb.user.jacksonm", "secret")
@@ -50,14 +48,14 @@ public class SslTest extends AbstractScenarioTest {
                                 .put("armor.authentication.authentication_backend.cache.enable", "false")
                                 .put("armor.ssl.transport.http.enabled", true)
                 .put("armor.ssl.transport.http.enforce_clientauth", true)
-                                .put("armor.ssl.transport.http.keystore_filepath", SecurityUtil.getAbsoluteFilePathFromClassPath("SearchguardKS.jks"))
+                                .put("armor.ssl.transport.http.keystore_filepath", SecurityUtil.getAbsoluteFilePathFromClassPath("ArmorKS.jks"))
                                 .put("armor.ssl.transport.http.truststore_filepath",
-                        SecurityUtil.getAbsoluteFilePathFromClassPath("SearchguardTS.jks")).build();
+                        SecurityUtil.getAbsoluteFilePathFromClassPath("ArmorTS.jks")).build();
 
         username = "jacksonm";
         password = "secret";
 
-        searchOnlyAllowed(settings, false);
+        searchOnlyAllowed(settings, false, false);
     }
 
     @Test
@@ -67,7 +65,7 @@ public class SslTest extends AbstractScenarioTest {
         enableSSL = true;
         enableSSLv3Only = true;
 
-        final Settings settings = ImmutableSettings
+        final Settings settings = Settings
                 .settingsBuilder()
                 .putArray("armor.authentication.authorization.settingsdb.roles.jacksonm", "ceo")
                 .put("armor.authentication.settingsdb.user.jacksonm", "secret")
@@ -79,14 +77,14 @@ public class SslTest extends AbstractScenarioTest {
                                 .put("armor.authentication.authentication_backend.cache.enable", "false")
                                 .put("armor.ssl.transport.http.enabled", true)
                 .put("armor.ssl.transport.http.enforce_clientauth", true)
-                                .put("armor.ssl.transport.http.keystore_filepath", SecurityUtil.getAbsoluteFilePathFromClassPath("SearchguardKS.jks"))
+                                .put("armor.ssl.transport.http.keystore_filepath", SecurityUtil.getAbsoluteFilePathFromClassPath("ArmorKS.jks"))
                                 .put("armor.ssl.transport.http.truststore_filepath",
-                        SecurityUtil.getAbsoluteFilePathFromClassPath("SearchguardTS.jks")).build();
+                        SecurityUtil.getAbsoluteFilePathFromClassPath("ArmorTS.jks")).build();
 
         username = "jacksonm";
         password = "secret";
 
-        searchOnlyAllowed(settings, false);
+        searchOnlyAllowed(settings, false, false);
     }
 
     @Test
@@ -95,7 +93,7 @@ public class SslTest extends AbstractScenarioTest {
 
         enableSSL = false;
 
-        final Settings settings = ImmutableSettings
+        final Settings settings = Settings
                 .settingsBuilder()
                 .putArray("armor.authentication.authorization.settingsdb.roles.jacksonm", "ceo")
                 .put("armor.authentication.settingsdb.user.jacksonm", "secret")
@@ -107,40 +105,41 @@ public class SslTest extends AbstractScenarioTest {
                                 .put("armor.authentication.authentication_backend.cache.enable", "false")
                                 .put("armor.ssl.transport.http.enabled", true)
                 .put("armor.ssl.transport.http.enforce_clientauth", true)
-                                .put("armor.ssl.transport.http.keystore_filepath", SecurityUtil.getAbsoluteFilePathFromClassPath("SearchguardKS.jks"))
+                                .put("armor.ssl.transport.http.keystore_filepath", SecurityUtil.getAbsoluteFilePathFromClassPath("ArmorKS.jks"))
                                 .put("armor.ssl.transport.http.truststore_filepath",
-                        SecurityUtil.getAbsoluteFilePathFromClassPath("SearchguardTS.jks")).build();
+                        SecurityUtil.getAbsoluteFilePathFromClassPath("ArmorTS.jks")).build();
 
         username = "jacksonm";
         password = "secret";
 
-        searchOnlyAllowed(settings, false);
+        searchOnlyAllowed(settings, false, false);
     }
 
     @Test
     public void testNodeSSL() throws Exception {
 
-        final Settings settings = ImmutableSettings
+        final Settings settings = Settings
                 .settingsBuilder()
                 .putArray("armor.authentication.authorization.settingsdb.roles.jacksonm", "ceo")
                 .put("armor.authentication.settingsdb.user.jacksonm", "secret")
                 .put("armor.authentication.authorizer.impl",
-                        "com.petalmd.armor.authorization.simple.SettingsBasedAuthorizator")
-                        .put("armor.authentication.authorizer.cache.enable", "false")
-                        .put("armor.authentication.authentication_backend.impl",
-                                "com.petalmd.armor.authentication.backend.simple.SettingsBasedAuthenticationBackend")
-                                .put("armor.authentication.authentication_backend.cache.enable", "false")
-                                .put("armor.ssl.transport.node.enabled", true)
+                    "com.petalmd.armor.authorization.simple.SettingsBasedAuthorizator")
+                .put("armor.authentication.authorizer.cache.enable", "false")
+                .put("armor.authentication.authentication_backend.impl",
+                    "com.petalmd.armor.authentication.backend.simple.SettingsBasedAuthenticationBackend")
+                .put("armor.authentication.authentication_backend.cache.enable", "false")
+                .put("armor.ssl.transport.node.enabled", true)
                 .put("armor.ssl.transport.node.enforce_clientauth", true)
-                                .put("armor.ssl.transport.node.keystore_filepath", SecurityUtil.getAbsoluteFilePathFromClassPath("SearchguardKS.jks"))
-                                .put("armor.ssl.transport.node.truststore_filepath",
-                        SecurityUtil.getAbsoluteFilePathFromClassPath("SearchguardTS.jks"))
-                                .put("armor.ssl.transport.node.encforce_hostname_verification", false).build();
+                .put("armor.ssl.transport.node.keystore_filepath", SecurityUtil.getAbsoluteFilePathFromClassPath("ArmorKS.jks"))
+                .put("armor.ssl.transport.node.truststore_filepath",
+                    SecurityUtil.getAbsoluteFilePathFromClassPath("ArmorTS.jks"))
+                .put("armor.ssl.transport.node.encforce_hostname_verification", false)
+                .build();
 
         username = "jacksonm";
         password = "secret";
 
-        searchOnlyAllowed(settings, false);
+        searchOnlyAllowed(settings, false, false);
     }
 
     @Test
@@ -148,23 +147,25 @@ public class SslTest extends AbstractScenarioTest {
 
         enableSSL = true;
 
-        final Settings settings = ImmutableSettings
+        final Settings settings = Settings
                 .settingsBuilder()
                 .put("armor.authentication.http_authenticator.impl",
-                        "com.petalmd.armor.authentication.http.clientcert.HTTPSClientCertAuthenticator")
-                        .putArray("armor.authentication.authorization.settingsdb.roles.localhost", "ceo")
-                        .put("armor.authentication.authorizer.impl",
-                                "com.petalmd.armor.authorization.simple.SettingsBasedAuthorizator")
-                                .put("armor.authentication.authorizer.cache.enable", "false")
-                                .put("armor.authentication.authentication_backend.impl",
-                                        "com.petalmd.armor.authentication.backend.simple.AlwaysSucceedAuthenticationBackend")
-                                        .put("armor.authentication.authentication_backend.cache.enable", "false")
-                                        .put("armor.ssl.transport.http.enabled", true)
+                    "com.petalmd.armor.authentication.http.clientcert.HTTPSClientCertAuthenticator")
+                .putArray("armor.authentication.authorization.settingsdb.roles.localhost", "ceo")
+                .put("armor.authentication.authorizer.impl",
+                    "com.petalmd.armor.authorization.simple.SettingsBasedAuthorizator")
+                .put("armor.authentication.authorizer.cache.enable", "false")
+                .put("armor.authentication.authentication_backend.impl",
+                    "com.petalmd.armor.authentication.backend.simple.AlwaysSucceedAuthenticationBackend")
+                .put("armor.authentication.authentication_backend.cache.enable", "false")
+                .put("armor.ssl.transport.http.enabled", true)
                 .put("armor.ssl.transport.http.enforce_clientauth", true)
-                                        .put("armor.ssl.transport.http.keystore_filepath", SecurityUtil.getAbsoluteFilePathFromClassPath("SearchguardKS.jks"))
-                                        .put("armor.ssl.transport.http.truststore_filepath",
-                        SecurityUtil.getAbsoluteFilePathFromClassPath("SearchguardTS.jks")).build();
+                .put("armor.ssl.transport.http.keystore_filepath",
+                    SecurityUtil.getAbsoluteFilePathFromClassPath("ArmorKS.jks"))
+                .put("armor.ssl.transport.http.truststore_filepath",
+                    SecurityUtil.getAbsoluteFilePathFromClassPath("ArmorTS.jks"))
+                .build();
 
-        searchOnlyAllowed(settings, false);
+        searchOnlyAllowed(settings, false, false);
     }
 }

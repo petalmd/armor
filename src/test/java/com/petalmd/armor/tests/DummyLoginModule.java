@@ -17,12 +17,11 @@
 
 package com.petalmd.armor.tests;
 
-import java.util.Map;
-
 import javax.security.auth.Subject;
 import javax.security.auth.callback.CallbackHandler;
 import javax.security.auth.login.LoginException;
 import javax.security.auth.spi.LoginModule;
+import java.util.Map;
 
 public class DummyLoginModule implements LoginModule {
 

@@ -17,12 +17,7 @@
 
 package com.petalmd.armor.service;
 
-import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.Executors;
-import java.util.concurrent.ScheduledFuture;
-import java.util.concurrent.ScheduledThreadPoolExecutor;
-import java.util.concurrent.TimeUnit;
-
+import com.petalmd.armor.util.ConfigConstants;
 import org.elasticsearch.ElasticsearchException;
 import org.elasticsearch.action.ActionListener;
 import org.elasticsearch.action.get.GetResponse;
@@ -33,10 +28,10 @@ import org.elasticsearch.common.inject.Inject;
 import org.elasticsearch.common.settings.Settings;
 import org.elasticsearch.common.util.concurrent.EsExecutors;
 import org.elasticsearch.common.util.concurrent.FutureUtils;
-import org.elasticsearch.indices.IndexMissingException;
+import org.elasticsearch.index.IndexNotFoundException;
 import org.elasticsearch.indices.IndicesService;
 
-import com.petalmd.armor.util.ConfigConstants;
+import java.util.concurrent.*;
 
 public class ArmorConfigService extends AbstractLifecycleComponent<ArmorConfigService> {
 
@@ -93,7 +88,7 @@ public class ArmorConfigService extends AbstractLifecycleComponent<ArmorConfigSe
 
             @Override
             public void onFailure(final Throwable e) {
-                if (e instanceof IndexMissingException) {
+                if (e instanceof IndexNotFoundException) {
                     logger.debug(
                             "Try to refresh security configuration but it failed due to {} - This might be ok if security setup not complete yet.",
                             e.toString());
@@ -116,7 +111,7 @@ public class ArmorConfigService extends AbstractLifecycleComponent<ArmorConfigSe
     @Override
     protected void doStart() throws ElasticsearchException {
         this.scheduler = (ScheduledThreadPoolExecutor) Executors.newScheduledThreadPool(1,
-                EsExecutors.daemonThreadFactory(client.settings(), "search_guard_config_service"));
+                EsExecutors.daemonThreadFactory(client.settings(), "armor_config_service"));
         this.scheduler.setExecuteExistingDelayedTasksAfterShutdownPolicy(false);
         this.scheduler.setContinueExistingPeriodicTasksAfterShutdownPolicy(false);
         this.scheduledFuture = this.scheduler.scheduleWithFixedDelay(new Reload(), 5, 1, TimeUnit.SECONDS);

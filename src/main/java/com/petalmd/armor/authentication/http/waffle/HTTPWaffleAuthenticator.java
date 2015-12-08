@@ -17,8 +17,14 @@
 
 package com.petalmd.armor.authentication.http.waffle;
 
-import java.net.InetSocketAddress;
-
+import com.google.common.base.Joiner;
+import com.google.common.io.BaseEncoding;
+import com.petalmd.armor.authentication.AuthCredentials;
+import com.petalmd.armor.authentication.AuthException;
+import com.petalmd.armor.authentication.User;
+import com.petalmd.armor.authentication.backend.AuthenticationBackend;
+import com.petalmd.armor.authentication.http.HTTPAuthenticator;
+import com.petalmd.armor.authorization.Authorizator;
 import org.apache.lucene.util.Constants;
 import org.elasticsearch.ElasticsearchException;
 import org.elasticsearch.common.inject.Inject;
@@ -29,19 +35,11 @@ import org.elasticsearch.rest.BytesRestResponse;
 import org.elasticsearch.rest.RestChannel;
 import org.elasticsearch.rest.RestRequest;
 import org.elasticsearch.rest.RestStatus;
-
 import waffle.windows.auth.IWindowsAuthProvider;
 import waffle.windows.auth.IWindowsIdentity;
 import waffle.windows.auth.IWindowsSecurityContext;
 
-import com.petalmd.armor.authentication.AuthCredentials;
-import com.petalmd.armor.authentication.AuthException;
-import com.petalmd.armor.authentication.User;
-import com.petalmd.armor.authentication.backend.AuthenticationBackend;
-import com.petalmd.armor.authentication.http.HTTPAuthenticator;
-import com.petalmd.armor.authorization.Authorizator;
-import com.google.common.base.Joiner;
-import com.google.common.io.BaseEncoding;
+import java.net.InetSocketAddress;
 
 public class HTTPWaffleAuthenticator implements HTTPAuthenticator {
 

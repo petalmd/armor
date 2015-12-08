@@ -17,17 +17,15 @@
 
 package com.petalmd.armor;
 
-import java.net.URL;
-
+import com.petalmd.armor.tests.DummyLoginModule;
+import com.petalmd.armor.util.SecurityUtil;
 import net.sourceforge.spnego.SpnegoHttpURLConnection;
-
-import org.elasticsearch.common.settings.ImmutableSettings;
 import org.elasticsearch.common.settings.Settings;
 import org.junit.Assert;
 import org.junit.Test;
 
-import com.petalmd.armor.tests.DummyLoginModule;
-import com.petalmd.armor.util.SecurityUtil;
+import java.net.InetAddress;
+import java.net.URL;
 
 public class SfSpNegoTest extends AbstractUnitTest {
 
@@ -37,27 +35,24 @@ public class SfSpNegoTest extends AbstractUnitTest {
         startLDAPServer();
         ldapServer.applyLdif(SecurityUtil.getAbsoluteFilePathFromClassPath("ldif1.ldif"));
 
-        final Settings settings = ImmutableSettings
+        final Settings settings = Settings
                 .settingsBuilder()
                 .putArray("armor.restactionfilter.names", "readonly")
                 .putArray("armor.restactionfilter.readonly.allowed_actions", "RestSearchAction")
-
                 .put("armor.authentication.http_authenticator.impl",
-                        "com.petalmd.armor.authentication.http.spnego.HTTPSpnegoAuthenticator")
-                        .put("armor.authentication.spnego.login_config_filepath", System.getProperty("java.security.auth.login.config"))
-                        .put("armor.authentication.spnego.krb5_config_filepath", System.getProperty("java.security.krb5.conf"))
-
-                        .put("armor.authentication.authorizer.impl", "com.petalmd.armor.authorization.ldap.LDAPAuthorizator")
-                        .put("armor.authentication.authorizer.cache.enable", "false")
-                        .put("armor.authentication.authentication_backend.impl",
-                                "com.petalmd.armor.authentication.backend.simple.AlwaysSucceedAuthenticationBackend")
-                                .put("armor.authentication.authentication_backend.cache.enable", "false")
-                                .putArray("armor.authentication.ldap.host", "localhost:" + ldapServerPort)
-                                .put("armor.authentication.ldap.usersearch", "(uid={0})")
-                                .put("armor.authentication.authorization.ldap.rolesearch", "(uniqueMember={0})")
-                                .put("armor.authentication.authorization.ldap.rolename", "cn")
-
-                                .build();
+                    "com.petalmd.armor.authentication.http.spnego.HTTPSpnegoAuthenticator")
+                .put("armor.authentication.spnego.login_config_filepath", System.getProperty("java.security.auth.login.config"))
+                .put("armor.authentication.spnego.krb5_config_filepath", System.getProperty("java.security.krb5.conf"))
+                .put("armor.authentication.authorizer.impl", "com.petalmd.armor.authorization.ldap.LDAPAuthorizator")
+                .put("armor.authentication.authorizer.cache.enable", "false")
+                .put("armor.authentication.authentication_backend.impl",
+                    "com.petalmd.armor.authentication.backend.simple.AlwaysSucceedAuthenticationBackend")
+                .put("armor.authentication.authentication_backend.cache.enable", "false")
+                .putArray("armor.authentication.ldap.host", "localhost:" + ldapServerPort)
+                .put("armor.authentication.ldap.usersearch", "(uid={0})")
+                .put("armor.authentication.authorization.ldap.rolesearch", "(uniqueMember={0})")
+                .put("armor.authentication.authorization.ldap.rolename", "cn")
+                .build();
 
         startES(settings);
 
@@ -70,8 +65,9 @@ public class SfSpNegoTest extends AbstractUnitTest {
                 "hnelson@EXAMPLE.COM", "secret");
 
         hcon.requestCredDeleg(true);
-
-        hcon.connect(new URL(getServerUri(false) + "/public/_search"));
+        InetAddress addr = InetAddress.getByName(AbstractUnitTest.getNonLocalhostAddress());
+        String hostname = addr.getHostName();
+        hcon.connect(new URL("http://" + hostname + ":" + elasticsearchHttpPort1 + "/public/_search"));
 
         Assert.assertEquals(200, hcon.getResponseCode());
 

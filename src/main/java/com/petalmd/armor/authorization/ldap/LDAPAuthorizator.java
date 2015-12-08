@@ -17,24 +17,14 @@
 
 package com.petalmd.armor.authorization.ldap;
 
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
-import java.io.IOException;
-import java.security.KeyStore;
-import java.security.KeyStoreException;
-import java.security.NoSuchAlgorithmException;
-import java.security.cert.CertificateException;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.Map;
-import java.util.Set;
-
-import javax.net.ssl.TrustManagerFactory;
-
 import com.google.common.collect.Iterators;
+import com.petalmd.armor.authentication.AuthCredentials;
+import com.petalmd.armor.authentication.AuthException;
+import com.petalmd.armor.authentication.LdapUser;
+import com.petalmd.armor.authentication.User;
+import com.petalmd.armor.authorization.NonCachingAuthorizator;
+import com.petalmd.armor.util.ConfigConstants;
+import com.petalmd.armor.util.SecurityUtil;
 import org.apache.directory.api.ldap.model.cursor.CursorException;
 import org.apache.directory.api.ldap.model.cursor.EntryCursor;
 import org.apache.directory.api.ldap.model.entry.Entry;
@@ -51,13 +41,16 @@ import org.elasticsearch.common.logging.ESLogger;
 import org.elasticsearch.common.logging.Loggers;
 import org.elasticsearch.common.settings.Settings;
 
-import com.petalmd.armor.authentication.AuthCredentials;
-import com.petalmd.armor.authentication.AuthException;
-import com.petalmd.armor.authentication.LdapUser;
-import com.petalmd.armor.authentication.User;
-import com.petalmd.armor.authorization.NonCachingAuthorizator;
-import com.petalmd.armor.util.ConfigConstants;
-import com.petalmd.armor.util.SecurityUtil;
+import javax.net.ssl.TrustManagerFactory;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.IOException;
+import java.security.KeyStore;
+import java.security.KeyStoreException;
+import java.security.NoSuchAlgorithmException;
+import java.security.cert.CertificateException;
+import java.util.*;
 
 public class LDAPAuthorizator implements NonCachingAuthorizator {
 

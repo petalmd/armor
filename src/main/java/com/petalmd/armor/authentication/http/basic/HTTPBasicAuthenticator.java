@@ -17,10 +17,12 @@
 
 package com.petalmd.armor.authentication.http.basic;
 
-import java.nio.charset.StandardCharsets;
-
-import javax.xml.bind.DatatypeConverter;
-
+import com.petalmd.armor.authentication.AuthCredentials;
+import com.petalmd.armor.authentication.AuthException;
+import com.petalmd.armor.authentication.User;
+import com.petalmd.armor.authentication.backend.AuthenticationBackend;
+import com.petalmd.armor.authentication.http.HTTPAuthenticator;
+import com.petalmd.armor.authorization.Authorizator;
 import org.elasticsearch.common.inject.Inject;
 import org.elasticsearch.common.logging.ESLogger;
 import org.elasticsearch.common.logging.Loggers;
@@ -30,12 +32,8 @@ import org.elasticsearch.rest.RestChannel;
 import org.elasticsearch.rest.RestRequest;
 import org.elasticsearch.rest.RestStatus;
 
-import com.petalmd.armor.authentication.AuthCredentials;
-import com.petalmd.armor.authentication.AuthException;
-import com.petalmd.armor.authentication.User;
-import com.petalmd.armor.authentication.backend.AuthenticationBackend;
-import com.petalmd.armor.authentication.http.HTTPAuthenticator;
-import com.petalmd.armor.authorization.Authorizator;
+import javax.xml.bind.DatatypeConverter;
+import java.nio.charset.StandardCharsets;
 
 //TODO FUTURE allow only if protocol==https
 public class HTTPBasicAuthenticator implements HTTPAuthenticator {

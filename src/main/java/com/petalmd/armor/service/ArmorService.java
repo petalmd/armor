@@ -17,15 +17,17 @@
 
 package com.petalmd.armor.service;
 
-import java.io.File;
-import java.lang.reflect.InvocationTargetException;
-import java.lang.reflect.Method;
-import java.security.SecureRandom;
-
-import javax.crypto.KeyGenerator;
-import javax.crypto.SecretKey;
-import javax.crypto.spec.SecretKeySpec;
-
+import com.petalmd.armor.audit.AuditListener;
+import com.petalmd.armor.authentication.backend.AuthenticationBackend;
+import com.petalmd.armor.authentication.http.HTTPAuthenticator;
+import com.petalmd.armor.authorization.Authorizator;
+import com.petalmd.armor.filter.level.ConfigurableSearchContextCallback;
+import com.petalmd.armor.filter.level.SearchContextCallback;
+import com.petalmd.armor.http.SessionStore;
+import com.petalmd.armor.rest.DefaultRestFilter;
+import com.petalmd.armor.rest.RestActionFilter;
+import com.petalmd.armor.util.ConfigConstants;
+import com.petalmd.armor.util.SecurityUtil;
 import org.apache.commons.io.FileUtils;
 import org.elasticsearch.ElasticsearchException;
 import org.elasticsearch.client.Client;
@@ -39,17 +41,13 @@ import org.elasticsearch.rest.RestHandler;
 import org.elasticsearch.rest.RestRequest;
 import org.elasticsearch.search.SearchService;
 
-import com.petalmd.armor.audit.AuditListener;
-import com.petalmd.armor.authentication.backend.AuthenticationBackend;
-import com.petalmd.armor.authentication.http.HTTPAuthenticator;
-import com.petalmd.armor.authorization.Authorizator;
-import com.petalmd.armor.filter.level.ConfigurableSearchContextCallback;
-import com.petalmd.armor.filter.level.SearchContextCallback;
-import com.petalmd.armor.http.SessionStore;
-import com.petalmd.armor.rest.DefaultRestFilter;
-import com.petalmd.armor.rest.RestActionFilter;
-import com.petalmd.armor.util.ConfigConstants;
-import com.petalmd.armor.util.SecurityUtil;
+import javax.crypto.KeyGenerator;
+import javax.crypto.SecretKey;
+import javax.crypto.spec.SecretKeySpec;
+import java.io.File;
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
+import java.security.SecureRandom;
 
 public class ArmorService extends AbstractLifecycleComponent<ArmorService> {
 
@@ -120,7 +118,7 @@ public class ArmorService extends AbstractLifecycleComponent<ArmorService> {
             searchServiceSetCallbackMethod.invoke(searchService, new ConfigurableSearchContextCallback(settings, auditListener));
         } catch (final Exception e) {
             log.error(e.toString(), e);
-            //throw new ElasticsearchException(e.toString());
+            throw new ElasticsearchException(e.toString());
         }
 
         this.auditListener = auditListener;
@@ -225,8 +223,8 @@ public class ArmorService extends AbstractLifecycleComponent<ArmorService> {
             throw new ElasticsearchException("No filter configured");
         }*/
 
-        // log.info("Starting Search Guard with {} filters",
-        //         (restActionFilters.length + dlsFilters.length + flsFilters.length + arFilters.length));
+//        log.info("Starting Search Guard with {} filters",
+//            (restActionFilters.length + dlsFilters.length + flsFilters.length + arFilters.length));
 
         log.trace("With settings " + this.settings.getAsMap());
 

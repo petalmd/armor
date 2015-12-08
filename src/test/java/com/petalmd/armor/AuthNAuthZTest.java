@@ -17,9 +17,8 @@
 
 package com.petalmd.armor;
 
-import java.util.Arrays;
-import java.util.Collection;
-
+import com.petalmd.armor.tests.DummyLoginModule;
+import com.petalmd.armor.util.SecurityUtil;
 import org.elasticsearch.common.settings.Settings;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -27,8 +26,8 @@ import org.junit.runners.Parameterized;
 import org.junit.runners.Parameterized.Parameter;
 import org.junit.runners.Parameterized.Parameters;
 
-import com.petalmd.armor.tests.DummyLoginModule;
-import com.petalmd.armor.util.SecurityUtil;
+import java.util.Arrays;
+import java.util.Collection;
 
 @RunWith(Parameterized.class)
 public class AuthNAuthZTest extends AbstractScenarioTest {
@@ -58,12 +57,13 @@ public class AuthNAuthZTest extends AbstractScenarioTest {
                 .put("armor.authentication.ldap.usersearch", "(uid={0})")
                 .put("armor.authentication.ldap.username_attribute", "uid")
                 .put("armor.authentication.authorization.ldap.rolesearch", "(uniqueMember={0})")
-                .put("armor.authentication.authorization.ldap.rolename", "cn").build();
+                .put("armor.authentication.authorization.ldap.rolename", "cn")
+                .build();
 
         username = "jacksonm";
         password = "secret" + (wrongPwd ? "-wrong" : "");
 
-        searchOnlyAllowed(settings, wrongPwd);
+        searchOnlyAllowed(settings, wrongPwd, false);
     }
 
     @Test
@@ -74,20 +74,21 @@ public class AuthNAuthZTest extends AbstractScenarioTest {
 
         final Settings settings = cacheEnabled(cacheEnabled)
                 .put("armor.authentication.http_authenticator.impl",
-                        "com.petalmd.armor.authentication.http.proxy.HTTPProxyAuthenticator")
-                        .putArray("armor.authentication.proxy.trusted_ips", "*")
-                        .put("armor.authentication.authorizer.impl", "com.petalmd.armor.authorization.ldap.LDAPAuthorizator")
-                        .put("armor.authentication.authentication_backend.impl",
-                                "com.petalmd.armor.authentication.backend.simple.AlwaysSucceedAuthenticationBackend")
+                    "com.petalmd.armor.authentication.http.proxy.HTTPProxyAuthenticator")
+                .putArray("armor.authentication.proxy.trusted_ips", "*")
+                .put("armor.authentication.authorizer.impl", "com.petalmd.armor.authorization.ldap.LDAPAuthorizator")
+                .put("armor.authentication.authentication_backend.impl",
+                    "com.petalmd.armor.authentication.backend.simple.AlwaysSucceedAuthenticationBackend")
                 .putArray("armor.authentication.ldap.host", "localhost:" + ldapServerPort)
                 .put("armor.authentication.ldap.usersearch", "(uid={0})")
                 .put("armor.authentication.ldap.username_attribute", "uid")
                 .put("armor.authentication.authorization.ldap.rolesearch", "(uniqueMember={0})")
-                .put("armor.authentication.authorization.ldap.rolename", "cn").build();
+                .put("armor.authentication.authorization.ldap.rolename", "cn")
+                .build();
 
         this.headers.put("X-Authenticated-User", "jacksonm" + (wrongPwd ? "-wrong" : ""));
 
-        searchOnlyAllowed(settings, wrongPwd);
+        searchOnlyAllowed(settings, wrongPwd, false);
     }
 
     @Test
@@ -115,7 +116,7 @@ public class AuthNAuthZTest extends AbstractScenarioTest {
         DummyLoginModule.username = "hnelson";
         DummyLoginModule.password = ("secret" + (wrongPwd ? "-wrong" : "")).toCharArray();
 
-        searchOnlyAllowed(settings, wrongPwd);
+        searchOnlyAllowed(settings, wrongPwd, false);
     }
 
 }

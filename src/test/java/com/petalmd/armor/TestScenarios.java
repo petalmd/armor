@@ -17,12 +17,10 @@
 
 package com.petalmd.armor;
 
-import org.elasticsearch.common.settings.ImmutableSettings;
-import org.elasticsearch.common.settings.Settings;
-import org.junit.Test;
-
 import com.petalmd.armor.util.ConfigConstants;
 import com.petalmd.armor.util.SecurityUtil;
+import org.elasticsearch.common.settings.Settings;
+import org.junit.Test;
 
 public class TestScenarios extends AbstractScenarioTest {
 
@@ -77,23 +75,13 @@ public class TestScenarios extends AbstractScenarioTest {
     }
 
     @Test
-    public void testSimpleFlsScenarioPartialFields() throws Exception {
-
-        final boolean wrongPassword = false;
-        username = "jacksonm";
-        password = "secret";
-
-        simpleFlsScenarioPartialFields(getAuthSettings(wrongPassword, "ceo"));
-    }
-
-    @Test
     public void testSearchOnlyAllowedActionSessionsEnabled() throws Exception {
 
         final boolean wrongPassword = false;
         username = "jacksonm";
         password = "secret";
 
-        final Settings settings = ImmutableSettings.builder().put(getAuthSettings(wrongPassword, "ceo"))
+        final Settings settings = Settings.builder().put(getAuthSettings(wrongPassword, "ceo"))
                 .put(ConfigConstants.ARMOR_HTTP_ENABLE_SESSIONS, true).build();
 
         searchOnlyAllowedAction(settings, wrongPassword);
@@ -124,7 +112,7 @@ public class TestScenarios extends AbstractScenarioTest {
         startLDAPServer();
         ldapServer.applyLdif(SecurityUtil.getAbsoluteFilePathFromClassPath("ldif1.ldif"));
 
-        final Settings settings = ImmutableSettings
+        final Settings settings = Settings
                 .settingsBuilder()
                 .put("armor.authentication.authorizer.impl", "com.petalmd.armor.authorization.ldap.LDAPAuthorizator")
                 .put("armor.authentication.authorizer.cache.enable", "true")

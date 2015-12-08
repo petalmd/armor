@@ -14,7 +14,7 @@
  * limitations under the License.
  * 
  */
-
+/*
 package com.petalmd.armor.filter;
 
 import java.io.Serializable;
@@ -23,7 +23,7 @@ import java.util.Iterator;
 import java.util.Set;
 
 import com.petalmd.armor.filter.Filter.Type;
-
+*/
 /*
  * THIS CLASS IS NOT USED YET
  * TODO Will be used in the future to store filter configuration in an index
@@ -51,9 +51,8 @@ import com.petalmd.armor.filter.Filter.Type;
         }
     ]
 }
- *
- */
-
+*/
+/*
 public class Filters implements Serializable {
 
     private Set<Filter> filter;
@@ -79,3 +78,4 @@ public class Filters implements Serializable {
     }
 
 }
+*/

@@ -17,20 +17,19 @@
 
 package com.petalmd.armor.authorization;
 
-import java.util.concurrent.TimeUnit;
-
 import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
+import com.petalmd.armor.authentication.AuthCredentials;
+import com.petalmd.armor.authentication.AuthException;
+import com.petalmd.armor.authentication.User;
 import org.elasticsearch.common.collect.Tuple;
 import org.elasticsearch.common.inject.Inject;
 import org.elasticsearch.common.logging.ESLogger;
 import org.elasticsearch.common.logging.Loggers;
 import org.elasticsearch.common.settings.Settings;
 
-import com.petalmd.armor.authentication.AuthCredentials;
-import com.petalmd.armor.authentication.AuthException;
-import com.petalmd.armor.authentication.User;
+import java.util.concurrent.TimeUnit;
 
 public final class GuavaCachingAuthorizator implements Authorizator {
 

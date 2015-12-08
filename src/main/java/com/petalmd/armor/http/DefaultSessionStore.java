@@ -17,18 +17,13 @@
 
 package com.petalmd.armor.http;
 
-import java.util.Date;
-import java.util.Iterator;
-import java.util.Map.Entry;
-import java.util.Timer;
-import java.util.TimerTask;
-import java.util.UUID;
-import java.util.concurrent.ConcurrentHashMap;
-
+import com.petalmd.armor.authentication.User;
 import org.elasticsearch.common.logging.ESLogger;
 import org.elasticsearch.common.logging.Loggers;
 
-import com.petalmd.armor.authentication.User;
+import java.util.*;
+import java.util.Map.Entry;
+import java.util.concurrent.ConcurrentHashMap;
 
 public class DefaultSessionStore implements SessionStore {
 

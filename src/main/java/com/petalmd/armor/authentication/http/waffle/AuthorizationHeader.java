@@ -21,14 +21,13 @@ package com.petalmd.armor.authentication.http.waffle;
  * Contributors:
  *     Application Security, Inc.
  */
+
+import com.google.common.io.BaseEncoding;
+import com.petalmd.armor.authentication.AuthException;
 import org.elasticsearch.rest.RestRequest;
 import org.elasticsearch.rest.RestRequest.Method;
-
 import waffle.util.NtlmMessage;
 import waffle.util.SPNegoMessage;
-
-import com.petalmd.armor.authentication.AuthException;
-import com.google.common.io.BaseEncoding;
 
 /**
  * Authorization header.

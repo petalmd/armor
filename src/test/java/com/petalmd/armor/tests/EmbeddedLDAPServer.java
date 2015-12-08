@@ -17,13 +17,8 @@
 
 package com.petalmd.armor.tests;
 
-import java.io.File;
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Map;
-
+import com.petalmd.armor.AbstractUnitTest;
+import com.petalmd.armor.util.SecurityUtil;
 import org.apache.commons.io.FileUtils;
 import org.apache.directory.api.ldap.model.constants.SupportedSaslMechanisms;
 import org.apache.directory.api.ldap.model.entry.DefaultEntry;
@@ -34,11 +29,7 @@ import org.apache.directory.server.annotations.CreateKdcServer;
 import org.apache.directory.server.annotations.CreateLdapServer;
 import org.apache.directory.server.annotations.CreateTransport;
 import org.apache.directory.server.annotations.SaslMechanism;
-import org.apache.directory.server.core.annotations.AnnotationUtils;
-import org.apache.directory.server.core.annotations.ContextEntry;
-import org.apache.directory.server.core.annotations.CreateDS;
-import org.apache.directory.server.core.annotations.CreateIndex;
-import org.apache.directory.server.core.annotations.CreatePartition;
+import org.apache.directory.server.core.annotations.*;
 import org.apache.directory.server.core.api.DirectoryService;
 import org.apache.directory.server.core.factory.DSAnnotationProcessor;
 import org.apache.directory.server.core.kerberos.KeyDerivationInterceptor;
@@ -60,8 +51,13 @@ import org.apache.directory.shared.kerberos.components.EncryptionKey;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.petalmd.armor.AbstractUnitTest;
-import com.petalmd.armor.util.SecurityUtil;
+import java.io.File;
+import java.io.IOException;
+import java.net.InetAddress;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+import java.util.Map;
 
 public class EmbeddedLDAPServer {
 
@@ -97,28 +93,45 @@ public class EmbeddedLDAPServer {
         log.debug("Keytab with " + keytab.getEntries().size() + " entries written to " + keytabFile.getAbsolutePath());
     }
 
-    @CreateDS(name = "ExampleComDS", allowAnonAccess = true, partitions = { @CreatePartition(name = "examplecom", suffix = "o=TEST", contextEntry = @ContextEntry(entryLdif = "dn: o=TEST\n"
-            + "dc: TEST\n" + "objectClass: top\n" + "objectClass: domain\n\n"), indexes = { @CreateIndex(attribute = "objectClass"),
-        @CreateIndex(attribute = "dc"), @CreateIndex(attribute = "ou") }) }, additionalInterceptors = { KeyDerivationInterceptor.class })
-    @CreateLdapServer(allowAnonymousAccess = true, transports = {
-            @CreateTransport(protocol = "LDAP", address = "localhost", port = ldapPort),
-            @CreateTransport(protocol = "LDAPS", address = "localhost", port = ldapsPort) },
+    @CreateDS(
+        name = "ExampleComDS",
+        allowAnonAccess = true,
+        partitions = {
+            @CreatePartition(
+                name = "examplecom",
+                suffix = "o=TEST",
+                contextEntry = @ContextEntry(entryLdif = "dn: o=TEST\ndc: TEST\nobjectClass: top\nobjectClass: domain\n\n"),
+                indexes = {
+                    @CreateIndex(attribute = "objectClass"),
+                    @CreateIndex(attribute = "dc"),
+                    @CreateIndex(attribute = "ou")})},
+        additionalInterceptors = { KeyDerivationInterceptor.class })
 
-            saslHost = "localhost", saslPrincipal = "ldap/localhost@EXAMPLE.COM", saslMechanisms = {
+    @CreateLdapServer(
+        allowAnonymousAccess = true,
+        transports = {
+            @CreateTransport(protocol = "LDAP", address = "localhost", port = ldapPort),
+            @CreateTransport(protocol = "LDAPS", address = "localhost", port = ldapsPort)},
+        saslHost = "localhost",
+        saslPrincipal = "ldap/localhost@EXAMPLE.COM",
+        saslMechanisms = {
             @SaslMechanism(name = SupportedSaslMechanisms.PLAIN, implClass = PlainMechanismHandler.class),
             @SaslMechanism(name = SupportedSaslMechanisms.CRAM_MD5, implClass = CramMd5MechanismHandler.class),
             @SaslMechanism(name = SupportedSaslMechanisms.DIGEST_MD5, implClass = DigestMd5MechanismHandler.class),
             @SaslMechanism(name = SupportedSaslMechanisms.GSSAPI, implClass = GssapiMechanismHandler.class),
             @SaslMechanism(name = SupportedSaslMechanisms.NTLM, implClass = NtlmMechanismHandler.class),
-            @SaslMechanism(name = SupportedSaslMechanisms.GSS_SPNEGO, implClass = NtlmMechanismHandler.class) }, extendedOpHandlers = { StartTlsHandler.class }
+            @SaslMechanism(name = SupportedSaslMechanisms.GSS_SPNEGO, implClass = NtlmMechanismHandler.class)},
+        extendedOpHandlers = { StartTlsHandler.class })
 
-            )
-    @CreateKdcServer(primaryRealm = "example.com", kdcPrincipal = "krbtgt/example.com@example.com", searchBaseDn = "o=TEST",
-    //maxTicketLifetime = 1000,
-    //maxRenewableLifetime = 2000,
-    transports = { @CreateTransport(protocol = "TCP", port = kdcPort), @CreateTransport(protocol = "UDP", port = kdcPort) })
+    @CreateKdcServer(
+        primaryRealm = "example.com",
+        kdcPrincipal = "krbtgt/armor.local@example.com",
+        searchBaseDn = "o=TEST",
+        transports = {
+            @CreateTransport(protocol = "TCP", port = kdcPort),
+            @CreateTransport(protocol = "UDP", port = kdcPort)})
+
     public void start() throws Exception {
-
         directoryService = DSAnnotationProcessor.getDirectoryService();
         kdcServer = ServerAnnotationProcessor.getKdcServer(directoryService, kdcPort);
         kdcServer.getConfig().setPaEncTimestampRequired(false);
@@ -126,7 +139,7 @@ public class EmbeddedLDAPServer {
         final CreateLdapServer cl = (CreateLdapServer) AnnotationUtils.getInstance(CreateLdapServer.class);
         ldapServer = ServerAnnotationProcessor.instantiateLdapServer(cl, directoryService);
 
-        ldapServer.setKeystoreFile(SecurityUtil.getAbsoluteFilePathFromClassPath("SearchguardKS.jks").getAbsolutePath());
+        ldapServer.setKeystoreFile(SecurityUtil.getAbsoluteFilePathFromClassPath("ArmorKS.jks").getAbsolutePath());
         ldapServer.setCertificatePassword("changeit");
         ldapServer.setEnabledCipherSuites(Arrays.asList(SecurityUtil.ENABLED_SSL_CIPHERS));
 
@@ -157,7 +170,9 @@ public class EmbeddedLDAPServer {
 
         final File newLdif = new File("target/tmp/" + ldifFile.getName());
         String ldif = FileUtils.readFileToString(ldifFile);
-        ldif = ldif.replace("${hostname}", AbstractUnitTest.getNonLocalhostAddress());
+        InetAddress addr = InetAddress.getByName(AbstractUnitTest.getNonLocalhostAddress());
+        String hostname = addr.getHostName();
+        ldif = ldif.replace("${hostname}", hostname);
         FileUtils.write(newLdif, ldif);
 
         int i = 0;

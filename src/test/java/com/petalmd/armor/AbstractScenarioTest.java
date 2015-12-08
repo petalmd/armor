@@ -1,17 +1,14 @@
 package com.petalmd.armor;
 
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
 import io.searchbox.client.JestResult;
-
-import java.util.Map;
-
 import org.apache.http.HttpResponse;
 import org.elasticsearch.common.collect.Tuple;
-import org.elasticsearch.common.settings.ImmutableSettings;
 import org.elasticsearch.common.settings.Settings;
 import org.junit.Assert;
 
-import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
+import java.util.Map;
 
 public abstract class AbstractScenarioTest extends AbstractUnitTest {
 
@@ -40,24 +37,24 @@ public abstract class AbstractScenarioTest extends AbstractUnitTest {
 
     protected void simpleDlsScenario(final Settings additionalSettings) throws Exception {
 
-        final Settings settings = ImmutableSettings.settingsBuilder().putArray("armor.dlsfilter.names", "dummy2-only")
+        final Settings settings = Settings.settingsBuilder().putArray("armor.dlsfilter.names", "dummy2-only")
                 .putArray("armor.dlsfilter.dummy2-only", "term", "user", "umberto", "true")
-                .put(additionalSettings == null ? ImmutableSettings.EMPTY : additionalSettings).build();
+                .put(additionalSettings == null ? Settings.EMPTY : additionalSettings).build();
 
         baseQuery(settings, "ac_rules_execute_all.json", "ac_query_matchall.json", 2, new String[] { "ceo", "future" });
     }
 
     protected void simpleFlsScenarioExclude(final Settings additionalSettings) throws Exception {
 
-        final Settings settings = ImmutableSettings
-                .settingsBuilder()
+        final Settings settings = Settings.settingsBuilder()
                 .putArray("armor.dlsfilter.names", "dummy2-only")
                 .putArray("armor.dlsfilter.dummy2-only", "term", "user", "umberto", "false")
                 .putArray("armor.flsfilter.names", "special-fields-only")
                 .putArray("armor.flsfilter.special-fields-only", "special-fields-only")
                 .putArray("armor.flsfilter.special-fields-only.source_excludes", "structure.thearray", "structure.thesubobject2",
                         "message").putArray("armor.flsfilter.special-fields-only.source_includes", "") //same as "" or null
-                .put(additionalSettings == null ? ImmutableSettings.EMPTY : additionalSettings).build();
+                .put(additionalSettings == null ? Settings.EMPTY : additionalSettings)
+                .build();
 
         final String json = baseQuery(settings, "ac_rules_execute_all.json", "ac_query_matchall.json", 1, new String[] { "ceo", "future" });
 
@@ -77,14 +74,14 @@ public abstract class AbstractScenarioTest extends AbstractUnitTest {
 
     protected void simpleFlsScenarioInclude(final Settings additionalSettings) throws Exception {
 
-        final Settings settings = ImmutableSettings.settingsBuilder().putArray("armor.dlsfilter.names", "dummy2-only")
+        final Settings settings = Settings.settingsBuilder().putArray("armor.dlsfilter.names", "dummy2-only")
                 .putArray("armor.dlsfilter.dummy2-only", "term", "user", "umberto", "false")
                 .putArray("armor.flsfilter.names", "special-fields-only")
                 .putArray("armor.flsfilter.special-fields-only", "special-fields-only")
                 .putArray("armor.flsfilter.special-fields-only.source_excludes", "")
                 //same as null
                 .putArray("armor.flsfilter.special-fields-only.source_includes", "message")
-                .put(additionalSettings == null ? ImmutableSettings.EMPTY : additionalSettings).build();
+                .put(additionalSettings == null ? Settings.EMPTY : additionalSettings).build();
 
         final String json = baseQuery(settings, "ac_rules_execute_all.json", "ac_query_matchall.json", 1, new String[] { "ceo", "future" });
 
@@ -124,16 +121,22 @@ public abstract class AbstractScenarioTest extends AbstractUnitTest {
         }
          */
 
-        final Settings settings = ImmutableSettings.settingsBuilder().putArray("armor.dlsfilter.names", "dummy2-only")
+        final Settings settings = Settings.settingsBuilder()
+                .putArray("armor.dlsfilter.names", "dummy2-only")
                 .putArray("armor.dlsfilter.dummy2-only", "term", "user", "umberto", "false")
                 .putArray("armor.flsfilter.names", "special-fields-only")
                 .putArray("armor.flsfilter.special-fields-only", "special-fields-only")
                 .putArray("armor.flsfilter.special-fields-only.source_excludes", "structure.the*field2")
                 .putArray("armor.flsfilter.special-fields-only.source_includes", "message") //does have not effect because to a "field"
-                .put(additionalSettings == null ? ImmutableSettings.EMPTY : additionalSettings).build();
+                .put(additionalSettings == null ? Settings.EMPTY : additionalSettings)
+                .build();
 
-        final String json = baseQuery(settings, "ac_rules_execute_all.json", "ac_query_matchall_twofields.json", 1, new String[] { "ceo",
-                "future" });
+        final String json = baseQuery(
+                settings,
+                "ac_rules_execute_all.json",
+                "ac_query_matchall_twofields.json",
+                1,
+                new String[] { "ceo", "future" });
 
         log.debug(toPrettyJson(json));
 
@@ -146,58 +149,14 @@ public abstract class AbstractScenarioTest extends AbstractUnitTest {
 
     }
 
-    protected void simpleFlsScenarioPartialFields(final Settings additionalSettings) throws Exception {
-
-        //without dls filter
-        /*
-         * "hits": [
-        {
-        "_index": "ceo",
-        "_type": "internal",
-        "_id": "tp_1",
-        "_score": 1.0,
-        "fields": {
-          "partial1": [
-            {
-              "structure": {
-                "thesubfield2": "yepp"
-              },
-              "user": "umberto"
-            }
-          ]
-        }
-        }
-         */
-
-        final Settings settings = ImmutableSettings.settingsBuilder().putArray("armor.dlsfilter.names", "dummy2-only")
-                .putArray("armor.dlsfilter.dummy2-only", "term", "user", "umberto", "false")
-                .putArray("armor.flsfilter.names", "special-fields-only")
-                .putArray("armor.flsfilter.special-fields-only", "special-fields-only")
-                .putArray("armor.flsfilter.special-fields-only.source_excludes", "structure.the*field2")
-                .putArray("armor.flsfilter.special-fields-only.source_includes", "message") //does have not effect because to a "field"
-                .put(additionalSettings == null ? ImmutableSettings.EMPTY : additionalSettings).build();
-
-        final String json = baseQuery(settings, "ac_rules_execute_all.json", "ac_query_matchall_twofieldspartial.json", 1, new String[] {
-                "ceo", "future" });
-
-        log.debug(toPrettyJson(json));
-
-        Assert.assertTrue(!json.contains("message"));
-        Assert.assertTrue(!json.contains("thearray"));
-        Assert.assertTrue(!json.contains("thesubfield2"));
-        Assert.assertTrue(!json.contains("structure"));
-        Assert.assertTrue(!json.contains("user"));
-        Assert.assertTrue(!json.contains("partial"));
-        Assert.assertTrue(!json.contains("_source"));
-
-    }
-
-    protected void searchOnlyAllowed(final Settings additionalSettings, final boolean wrongPwd) throws Exception {
+    protected void searchOnlyAllowed(final Settings additionalSettings, final boolean wrongPwd, final boolean connectFromLocalhost) throws Exception {
         final String[] indices = new String[] { "internal" };
 
-        final Settings settings = ImmutableSettings.settingsBuilder().putArray("armor.restactionfilter.names", "readonly")
+        final Settings settings = Settings.settingsBuilder()
+                .putArray("armor.restactionfilter.names", "readonly")
                 .putArray("armor.restactionfilter.readonly.allowed_actions", "RestSearchAction")
-                .put(additionalSettings == null ? ImmutableSettings.EMPTY : additionalSettings).build();
+                .put(additionalSettings == null ? Settings.EMPTY : additionalSettings)
+                .build();
 
         startES(settings);
 
@@ -210,16 +169,16 @@ public abstract class AbstractScenarioTest extends AbstractUnitTest {
             assertJestResultCount(result, 7);
 
             result = executeGet(indices[0], "test", "dummy", false, false).v1();
-            assertJestResultError(result, "ForbiddenException[Forbidden action RestGetAction . Allowed actions: [RestSearchAction]]");
+            assertJestResultError(result, "{\"root_cause\":[{\"type\":\"forbidden_exception\",\"reason\":\"Forbidden action RestGetAction . Allowed actions: [RestSearchAction]\"}],\"type\":\"forbidden_exception\",\"reason\":\"Forbidden action RestGetAction . Allowed actions: [RestSearchAction]\"}");
 
             result = executeIndexAsString("{}", indices[0], "test", null, false, false).v1();
-            assertJestResultError(result, "ForbiddenException[Forbidden action RestIndexAction . Allowed actions: [RestSearchAction]]");
+            assertJestResultError(result, "{\"root_cause\":[{\"type\":\"forbidden_exception\",\"reason\":\"Forbidden action RestIndexAction . Allowed actions: [RestSearchAction]\"}],\"type\":\"forbidden_exception\",\"reason\":\"Forbidden action RestIndexAction . Allowed actions: [RestSearchAction]\"}");
         } else {
 
             JestResult result = executeSearch("ac_query_matchall.json", indices, null, false, false).v1();
             assertJestResultError(result, "Cannot authenticate user", "Unauthorized", "No user");
 
-            result = executeGet(indices[0], "test", null, false, false).v1();
+            result = executeGet(indices[0], "test", null, false, connectFromLocalhost).v1();
             assertJestResultError(result, "Cannot authenticate user", "Unauthorized", "No user");
 
             result = executeIndexAsString("{}", indices[0], "test", null, false, false).v1();
@@ -228,22 +187,25 @@ public abstract class AbstractScenarioTest extends AbstractUnitTest {
     }
 
     protected void searchOnlyAllowedMoreFilters(final Settings additionalSettings, final boolean wrongPwd) throws Exception {
-        final Settings settings = ImmutableSettings.settingsBuilder()
+        final Settings settings = Settings.settingsBuilder()
                 .putArray("armor.restactionfilter.names", "readonly", "al_l", "no-ne")
                 .putArray("armor.restactionfilter.readonly.allowed_actions", "RestSearchAction")
                 .putArray("armor.restactionfilter.al_l.allowed_actions", "*")
                 .putArray("armor.restactionfilter.no-ne.allowed_actions", "RestSearchAction")
-                .put(additionalSettings == null ? ImmutableSettings.EMPTY : additionalSettings).build();
+                .put(additionalSettings == null ? Settings.EMPTY : additionalSettings)
+                .build();
 
-        searchOnlyAllowed(settings, wrongPwd);
+        searchOnlyAllowed(settings, wrongPwd, false);
     }
 
     protected void searchOnlyAllowedAction(final Settings additionalSettings, final boolean wrongPwd) throws Exception {
         final String[] indices = new String[] { "internal" };
 
-        final Settings settings = ImmutableSettings.settingsBuilder().putArray("armor.actionrequestfilter.names", "readonly")
+        final Settings settings = Settings.settingsBuilder()
+                .putArray("armor.actionrequestfilter.names", "readonly")
                 .putArray("armor.actionrequestfilter.readonly.allowed_actions", "indices:data/read/search")
-                .put(additionalSettings == null ? ImmutableSettings.EMPTY : additionalSettings).build();
+                .put(additionalSettings == null ? Settings.EMPTY : additionalSettings)
+                .build();
 
         startES(settings);
 
@@ -274,10 +236,10 @@ public abstract class AbstractScenarioTest extends AbstractUnitTest {
     }
 
     //TODO test get rewrite
-
     protected void dlsLdapUserAttribute(final Settings additionalSettings) throws Exception {
 
-        final Settings settings = ImmutableSettings.settingsBuilder().putArray("armor.restactionfilter.names", "readonly", "noget")
+        final Settings settings = Settings.settingsBuilder()
+                .putArray("armor.restactionfilter.names", "readonly", "noget")
                 .putArray("armor.restactionfilter.readonly.allowed_actions", "RestSearchAction")
                 .putArray("armor.restactionfilter.noget.forbidden_actions", "RestGetAction")
                 .putArray("armor.restactionfilter.noget.allowed_actions", "*")
@@ -294,7 +256,7 @@ public abstract class AbstractScenarioTest extends AbstractUnitTest {
                 .putArray("armor.actionrequestfilter.readonly.allowed_actions", "indices:data/read/*", "*monitor*")
                 .putArray("armor.actionrequestfilter.readonly.forbidden_actions", "cluster:*", "indices:admin*")
 
-                .put(additionalSettings == null ? ImmutableSettings.EMPTY : additionalSettings).build();
+                .put(additionalSettings == null ? Settings.EMPTY : additionalSettings).build();
 
         username = "jacksonm";
         password = "secret";
@@ -307,7 +269,10 @@ public abstract class AbstractScenarioTest extends AbstractUnitTest {
 
         final Gson gson = new GsonBuilder().setPrettyPrinting().create();
 
-        final Tuple<JestResult, HttpResponse> resulttu = executeSearch("ac_query_matchall_fields.json", new String[] { "internal" }, null,
+        final Tuple<JestResult, HttpResponse> resulttu = executeSearch(
+                "ac_query_matchall_fields.json",
+                new String[] { "internal" },
+                null,
                 true, false);
 
         final JestResult result = resulttu.v1();

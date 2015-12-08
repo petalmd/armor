@@ -17,13 +17,19 @@
 
 package com.petalmd.armor.rest;
 
-import java.net.InetAddress;
-import java.net.InetSocketAddress;
-import java.util.ArrayList;
-import java.util.Iterator;
-import java.util.List;
-
 import com.google.common.collect.Lists;
+import com.petalmd.armor.audit.AuditListener;
+import com.petalmd.armor.authentication.AuthException;
+import com.petalmd.armor.authentication.User;
+import com.petalmd.armor.authentication.backend.AuthenticationBackend;
+import com.petalmd.armor.authentication.http.HTTPAuthenticator;
+import com.petalmd.armor.authorization.Authorizator;
+import com.petalmd.armor.http.Session;
+import com.petalmd.armor.http.SessionStore;
+import com.petalmd.armor.http.netty.SessionAwareNettyHttpChannel;
+import com.petalmd.armor.service.ArmorService;
+import com.petalmd.armor.util.ConfigConstants;
+import com.petalmd.armor.util.SecurityUtil;
 import org.elasticsearch.action.get.MultiGetRequest;
 import org.elasticsearch.action.get.MultiGetRequest.Item;
 import org.elasticsearch.action.search.MultiSearchRequest;
@@ -43,18 +49,11 @@ import org.elasticsearch.rest.action.support.RestActions;
 import org.elasticsearch.search.builder.SearchSourceBuilder;
 import org.elasticsearch.search.fetch.source.FetchSourceContext;
 
-import com.petalmd.armor.audit.AuditListener;
-import com.petalmd.armor.authentication.AuthException;
-import com.petalmd.armor.authentication.User;
-import com.petalmd.armor.authentication.backend.AuthenticationBackend;
-import com.petalmd.armor.authentication.http.HTTPAuthenticator;
-import com.petalmd.armor.authorization.Authorizator;
-import com.petalmd.armor.http.Session;
-import com.petalmd.armor.http.SessionStore;
-import com.petalmd.armor.http.netty.SessionAwareNettyHttpChannel;
-import com.petalmd.armor.service.ArmorService;
-import com.petalmd.armor.util.ConfigConstants;
-import com.petalmd.armor.util.SecurityUtil;
+import java.net.InetAddress;
+import java.net.InetSocketAddress;
+import java.util.ArrayList;
+import java.util.Iterator;
+import java.util.List;
 
 public abstract class AbstractACRestFilter extends RestFilter {
 

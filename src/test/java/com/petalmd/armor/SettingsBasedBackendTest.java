@@ -17,24 +17,22 @@
 
 package com.petalmd.armor;
 
-import org.elasticsearch.common.settings.ImmutableSettings;
-import org.elasticsearch.common.settings.Settings;
-import org.junit.Assert;
-import org.junit.Test;
-
 import com.petalmd.armor.authentication.AuthCredentials;
 import com.petalmd.armor.authentication.AuthException;
 import com.petalmd.armor.authentication.User;
 import com.petalmd.armor.authentication.backend.simple.SettingsBasedAuthenticationBackend;
 import com.petalmd.armor.authorization.Authorizator;
 import com.petalmd.armor.authorization.simple.SettingsBasedAuthorizator;
+import org.elasticsearch.common.settings.Settings;
+import org.junit.Assert;
+import org.junit.Test;
 
 public class SettingsBasedBackendTest extends AbstractUnitTest {
 
     @Test
     public void testSimple() throws Exception {
 
-        final Settings settings = ImmutableSettings.settingsBuilder()
+        final Settings settings = Settings.settingsBuilder()
                 .putArray("armor.authentication.authorization.settingsdb.roles.spock", "kolinahr", "starfleet", "command")
                 .put("armor.authentication.settingsdb.user.spock", "vulcan").build();
 
@@ -47,7 +45,7 @@ public class SettingsBasedBackendTest extends AbstractUnitTest {
     @Test
     public void testSimpleRoles() throws Exception {
 
-        final Settings settings = ImmutableSettings.settingsBuilder()
+        final Settings settings = Settings.settingsBuilder()
                 .putArray("armor.authentication.authorization.settingsdb.roles.spock", "kolinahr", "starfleet", "command")
                 .put("armor.authentication.settingsdb.user.spock", "vulcan").build();
 
@@ -65,7 +63,7 @@ public class SettingsBasedBackendTest extends AbstractUnitTest {
     @Test
     public void testDigestMd5() throws Exception {
 
-        final Settings settings = ImmutableSettings.settingsBuilder()
+        final Settings settings = Settings.settingsBuilder()
                 .putArray("armor.authentication.authorization.settingsdb.roles.spock", "kolinahr", "starfleet", "command")
                 .put("armor.authentication.settingsdb.user.spock", "0c94ea3ecdd57ac44984589682e4be05")
                 .put("armor.authentication.settingsdb.digest", "md5").build();
@@ -80,7 +78,7 @@ public class SettingsBasedBackendTest extends AbstractUnitTest {
     @Test
     public void testDigestSha1() throws Exception {
 
-        final Settings settings = ImmutableSettings.settingsBuilder()
+        final Settings settings = Settings.settingsBuilder()
                 .putArray("armor.authentication.authorization.settingsdb.roles.spock", "kolinahr", "starfleet", "command")
                 .put("armor.authentication.settingsdb.user.spock", "966032eab6276624119a49080934e3936d2976f7")
                 .put("armor.authentication.settingsdb.digest", "sha1").build();
@@ -95,7 +93,7 @@ public class SettingsBasedBackendTest extends AbstractUnitTest {
     @Test(expected = AuthException.class)
     public void testDigestSha1Fail() throws Exception {
 
-        final Settings settings = ImmutableSettings.settingsBuilder()
+        final Settings settings = Settings.settingsBuilder()
                 .putArray("armor.authentication.authorization.settingsdb.roles.spock", "kolinahr", "starfleet", "command")
                 .put("armor.authentication.settingsdb.user.spock", "966032eab6276624119a49080934e3936d2976f7")
                 .put("armor.authentication.settingsdb.digest", "sha1").build();
@@ -107,7 +105,7 @@ public class SettingsBasedBackendTest extends AbstractUnitTest {
     @Test(expected = AuthException.class)
     public void testDigestSha1FailDigestAgain() throws Exception {
 
-        final Settings settings = ImmutableSettings.settingsBuilder()
+        final Settings settings = Settings.settingsBuilder()
             .putArray("searchguard.authentication.authorization.settingsdb.roles.spock", "kolinahr", "starfleet", "command")
             .put("searchguard.authentication.settingsdb.user.spock", "966032eab6276624119a49080934e3936d2976f7")
             .put("searchguard.authentication.settingsdb.digest", "sha1").build();
@@ -119,7 +117,7 @@ public class SettingsBasedBackendTest extends AbstractUnitTest {
     @Test(expected = AuthException.class)
     public void testFailUser() throws Exception {
 
-        final Settings settings = ImmutableSettings.settingsBuilder()
+        final Settings settings = Settings.settingsBuilder()
                 .putArray("armor.authentication.authorization.settingsdb.roles.spock", "kolinahr", "starfleet", "command")
                 .put("armor.authentication.settingsdb.user.spock", "vulcan").build();
 
@@ -130,7 +128,7 @@ public class SettingsBasedBackendTest extends AbstractUnitTest {
     @Test(expected = AuthException.class)
     public void testFailPassword() throws Exception {
 
-        final Settings settings = ImmutableSettings.settingsBuilder()
+        final Settings settings = Settings.settingsBuilder()
                 .putArray("armor.authentication.authorization.settingsdb.roles.spock", "kolinahr", "starfleet", "command")
                 .put("armor.authentication.settingsdb.user.spock", "vulcan").build();
 
@@ -141,7 +139,7 @@ public class SettingsBasedBackendTest extends AbstractUnitTest {
     @Test(expected = AuthException.class)
     public void testFailNullPassword() throws Exception {
 
-        final Settings settings = ImmutableSettings.settingsBuilder()
+        final Settings settings = Settings.settingsBuilder()
                 .putArray("searchguard.authentication.authorization.settingsdb.roles.spock", "kolinahr", "starfleet", "command")
                 .build();
 
@@ -152,7 +150,7 @@ public class SettingsBasedBackendTest extends AbstractUnitTest {
     @Test(expected = AuthException.class)
     public void testFailEmptyPassword() throws Exception {
 
-        final Settings settings = ImmutableSettings.settingsBuilder()
+        final Settings settings = Settings.settingsBuilder()
                 .putArray("searchguard.authentication.authorization.settingsdb.roles.spock", "kolinahr", "starfleet", "command")
                 .put("searchguard.authentication.settingsdb.user.spock", "").build();
 

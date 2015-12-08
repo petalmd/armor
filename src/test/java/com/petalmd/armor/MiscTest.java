@@ -17,23 +17,18 @@
 
 package com.petalmd.armor;
 
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
 import io.searchbox.client.JestClient;
 import io.searchbox.client.JestResult;
 import io.searchbox.indices.mapping.PutMapping;
-
-import java.util.Map;
-
 import org.apache.http.HttpResponse;
-import org.elasticsearch.ElasticsearchException;
 import org.elasticsearch.common.collect.Tuple;
-import org.elasticsearch.common.settings.ImmutableSettings;
 import org.elasticsearch.common.settings.Settings;
 import org.junit.Assert;
 import org.junit.Test;
 
-import com.petalmd.armor.service.ArmorService;
-import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
+import java.util.Map;
 
 public class MiscTest extends AbstractUnitTest {
 
@@ -45,7 +40,7 @@ public class MiscTest extends AbstractUnitTest {
     @Test
     public void unauthenticatedTest() throws Exception {
 
-        final Settings settings = ImmutableSettings
+        final Settings settings = Settings
                 .settingsBuilder()
                 .putArray("armor.restactionfilter.names", "readonly")
                 .putArray("armor.restactionfilter.readonly.allowed_actions", "*")
@@ -76,7 +71,7 @@ public class MiscTest extends AbstractUnitTest {
     @Test
     public void testArmorIndexAttack() throws Exception {
 
-        final Settings settings = ImmutableSettings
+        final Settings settings = Settings
                 .settingsBuilder()
                 .putArray("armor.authentication.authorization.settingsdb.roles.jacksonm", "root")
                 .put("armor.authentication.settingsdb.user.jacksonm", "secret")
@@ -100,7 +95,7 @@ public class MiscTest extends AbstractUnitTest {
 
         final JestClient client = getJestClient(getServerUri(false), username, password);
 
-        final JestResult jr = client.execute(new PutMapping.Builder("_all", "ac", "\"ac\" : {" + "\"properties\" : {"
+        final JestResult jr = client.execute(new PutMapping.Builder("_all", "ac", "{" + "\"properties\" : {"
                 + "\"rules\" : {\"type\" : \"string\", \"store\" : true }" + "}" + "}"
 
         ).setHeader(headers).build());

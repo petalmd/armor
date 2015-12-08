@@ -17,20 +17,19 @@
 
 package com.petalmd.armor.http.netty;
 
-import org.elasticsearch.common.logging.ESLogger;
-import org.elasticsearch.common.logging.Loggers;
-import org.jboss.netty.handler.codec.http.Cookie;
-import org.jboss.netty.handler.codec.http.CookieEncoder;
-import org.jboss.netty.handler.codec.http.DefaultCookie;
-import org.elasticsearch.http.netty.NettyHttpRequest;
-import org.elasticsearch.rest.RestChannel;
-import org.elasticsearch.rest.RestResponse;
-
 import com.petalmd.armor.authentication.User;
 import com.petalmd.armor.http.Session;
 import com.petalmd.armor.http.SessionStore;
 import com.petalmd.armor.http.netty.MutualSSLHandler.DefaultHttpsRequest;
 import com.petalmd.armor.util.SecurityUtil;
+import org.elasticsearch.common.logging.ESLogger;
+import org.elasticsearch.common.logging.Loggers;
+import org.elasticsearch.http.netty.NettyHttpRequest;
+import org.elasticsearch.rest.RestChannel;
+import org.elasticsearch.rest.RestResponse;
+import org.jboss.netty.handler.codec.http.Cookie;
+import org.jboss.netty.handler.codec.http.CookieEncoder;
+import org.jboss.netty.handler.codec.http.DefaultCookie;
 
 public class SessionAwareNettyHttpChannel extends RestChannel {
 

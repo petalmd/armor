@@ -1,9 +1,7 @@
 language: java
 
 jdk:
-  - openjdk7
-  - oraclejdk7
-  - oraclejdk8 
+  - oraclejdk8
 
 after_success:
   - mvn clean cobertura:cobertura coveralls:report
@@ -23,3 +21,5 @@ addons:
     build_command_prepend: "mvn clean"
     build_command:   "mvn -DskipTests=true compile"
     branch_pattern: coverity_scan
+  hosts:
+      - armor.local

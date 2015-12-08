@@ -17,21 +17,16 @@
 
 package com.petalmd.armor.transport;
 
-import java.io.IOException;
-
 import org.elasticsearch.Version;
 import org.elasticsearch.common.io.stream.StreamInput;
 import org.elasticsearch.common.logging.ESLogger;
-import org.jboss.netty.channel.Channel;
-import org.jboss.netty.channel.ChannelFuture;
-import org.jboss.netty.channel.ChannelFutureListener;
-import org.jboss.netty.channel.ChannelHandlerContext;
-import org.jboss.netty.channel.ChannelStateEvent;
-import org.jboss.netty.channel.MessageEvent;
-import org.jboss.netty.handler.ssl.SslHandler;
 import org.elasticsearch.transport.TransportResponseHandler;
 import org.elasticsearch.transport.netty.MessageChannelHandler;
 import org.elasticsearch.transport.netty.NettyTransport;
+import org.jboss.netty.channel.*;
+import org.jboss.netty.handler.ssl.SslHandler;
+
+import java.io.IOException;
 
 public class ArmorMessageChannelHandler extends MessageChannelHandler {
 

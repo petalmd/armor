@@ -17,12 +17,11 @@
 
 package com.petalmd.armor.rest;
 
+import com.petalmd.armor.audit.AuditListener;
+import com.petalmd.armor.service.ArmorService;
 import org.elasticsearch.rest.RestChannel;
 import org.elasticsearch.rest.RestFilterChain;
 import org.elasticsearch.rest.RestRequest;
-
-import com.petalmd.armor.audit.AuditListener;
-import com.petalmd.armor.service.ArmorService;
 
 public class DefaultRestFilter extends AbstractACRestFilter {
 

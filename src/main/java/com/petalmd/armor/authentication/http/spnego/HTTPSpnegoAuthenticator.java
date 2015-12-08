@@ -19,32 +19,6 @@
 
 package com.petalmd.armor.authentication.http.spnego;
 
-import java.io.Serializable;
-import java.security.Principal;
-import java.security.PrivilegedAction;
-import java.security.PrivilegedActionException;
-import java.security.PrivilegedExceptionAction;
-
-import javax.security.auth.Subject;
-import javax.security.auth.login.LoginContext;
-import javax.security.auth.login.LoginException;
-import javax.xml.bind.DatatypeConverter;
-
-import org.elasticsearch.common.inject.Inject;
-import org.elasticsearch.common.logging.ESLogger;
-import org.elasticsearch.common.logging.Loggers;
-import org.elasticsearch.common.settings.Settings;
-import org.elasticsearch.rest.BytesRestResponse;
-import org.elasticsearch.rest.RestChannel;
-import org.elasticsearch.rest.RestRequest;
-import org.elasticsearch.rest.RestStatus;
-import org.ietf.jgss.GSSContext;
-import org.ietf.jgss.GSSCredential;
-import org.ietf.jgss.GSSException;
-import org.ietf.jgss.GSSManager;
-import org.ietf.jgss.GSSName;
-import org.ietf.jgss.Oid;
-
 import com.petalmd.armor.authentication.AuthCredentials;
 import com.petalmd.armor.authentication.AuthException;
 import com.petalmd.armor.authentication.User;
@@ -53,6 +27,25 @@ import com.petalmd.armor.authentication.http.HTTPAuthenticator;
 import com.petalmd.armor.authorization.Authorizator;
 import com.petalmd.armor.util.ConfigConstants;
 import com.petalmd.armor.util.SecurityUtil;
+import org.elasticsearch.common.inject.Inject;
+import org.elasticsearch.common.logging.ESLogger;
+import org.elasticsearch.common.logging.Loggers;
+import org.elasticsearch.common.settings.Settings;
+import org.elasticsearch.rest.BytesRestResponse;
+import org.elasticsearch.rest.RestChannel;
+import org.elasticsearch.rest.RestRequest;
+import org.elasticsearch.rest.RestStatus;
+import org.ietf.jgss.*;
+
+import javax.security.auth.Subject;
+import javax.security.auth.login.LoginContext;
+import javax.security.auth.login.LoginException;
+import javax.xml.bind.DatatypeConverter;
+import java.io.Serializable;
+import java.security.Principal;
+import java.security.PrivilegedAction;
+import java.security.PrivilegedActionException;
+import java.security.PrivilegedExceptionAction;
 
 public class HTTPSpnegoAuthenticator implements HTTPAuthenticator {
 
@@ -87,105 +80,102 @@ public class HTTPSpnegoAuthenticator implements HTTPAuthenticator {
         Principal principal = null;
 
         if (authorizationHeader != null) {
-
             if (!authorizationHeader.trim().toLowerCase().startsWith("negotiate ")) {
                 throw new AuthException("Bad 'Authorization' header");
-            } else {
-
-                byte[] decodedNegotiateHeader = DatatypeConverter.parseBase64Binary(authorizationHeader.substring(10));
-
-                LoginContext lc = null;
-                GSSContext gssContext = null;
-                byte[] outToken = null;
-                try {
-                    try {
-                        lc = new LoginContext(loginContextName);
-                        lc.login();
-                    } catch (final LoginException e) {
-                        log.error("Unable to login due to {}", e, e.toString());
-                        throw new AuthException(e);
-                    }
-
-                    final Subject subject = lc.getSubject();
-
-                    final GSSManager manager = GSSManager.getInstance();
-                    final int credentialLifetime = GSSCredential.INDEFINITE_LIFETIME;
-
-                    final PrivilegedExceptionAction<GSSCredential> action = new PrivilegedExceptionAction<GSSCredential>() {
-                        @Override
-                        public GSSCredential run() throws GSSException {
-                            return manager.createCredential(null, credentialLifetime, new Oid("1.3.6.1.5.5.2"), GSSCredential.ACCEPT_ONLY);
-                        }
-                    };
-                    gssContext = manager.createContext(Subject.doAs(subject, action));
-
-                    outToken = Subject.doAs(lc.getSubject(), new AcceptAction(gssContext, decodedNegotiateHeader));
-
-                    if (outToken == null) {
-                        log.trace("Ticket validation not successful");
-                        final BytesRestResponse wwwAuthenticateResponse = new BytesRestResponse(RestStatus.UNAUTHORIZED);
-                        wwwAuthenticateResponse.addHeader("WWW-Authenticate", "Negotiate");
-                        channel.sendResponse(wwwAuthenticateResponse);
-                        return null;
-                    }
-
-                    principal = Subject.doAs(subject, new AuthenticateAction(this, gssContext, strip));
-
-                } catch (final GSSException e) {
-                    log.trace("Ticket validation not successful due to {}", e);
-                    final BytesRestResponse wwwAuthenticateResponse = new BytesRestResponse(RestStatus.UNAUTHORIZED);
-                    wwwAuthenticateResponse.addHeader("WWW-Authenticate", "Negotiate");
-                    channel.sendResponse(wwwAuthenticateResponse);
-                    return null;
-                } catch (final PrivilegedActionException e) {
-                    final Throwable cause = e.getCause();
-                    if (cause instanceof GSSException) {
-                        log.trace("Service login not successful due to {}", e);
-                    } else {
-                        log.error("Service login not successful due to {}", e.toString(), e);
-                    }
-                    final BytesRestResponse wwwAuthenticateResponse = new BytesRestResponse(RestStatus.UNAUTHORIZED);
-                    wwwAuthenticateResponse.addHeader("WWW-Authenticate", "Negotiate");
-                    channel.sendResponse(wwwAuthenticateResponse);
-                    return null;
-                } finally {
-                    if (gssContext != null) {
-                        try {
-                            gssContext.dispose();
-                        } catch (final GSSException e) {
-                            // Ignore
-                        }
-                    }
-                    if (lc != null) {
-                        try {
-                            lc.logout();
-                        } catch (final LoginException e) {
-                            // Ignore
-                        }
-                    }
-                }
-
-                if (principal == null) {
-
-                    final BytesRestResponse wwwAuthenticateResponse = new BytesRestResponse(RestStatus.UNAUTHORIZED);
-                    wwwAuthenticateResponse.addHeader("WWW-Authenticate", "Negotiate " + DatatypeConverter.printBase64Binary(outToken));
-                    channel.sendResponse(wwwAuthenticateResponse);
-                    throw new AuthException("Cannot authenticate");
-                }
-
-                //TODO FUTURE as privileged action?
-                final User authenticatedUser = backend.authenticate(new AuthCredentials(((SimpleUserPrincipal) principal).getName(),
-                        gssContext));
-                authorizator.fillRoles(authenticatedUser, new AuthCredentials(authenticatedUser.getName(), gssContext));
-
-                decodedNegotiateHeader = null;
-                authorizationHeader = null;
-
-                log.debug("User '{}' is authenticated", authenticatedUser);
-
-                return authenticatedUser;
             }
 
+            byte[] decodedNegotiateHeader = DatatypeConverter.parseBase64Binary(authorizationHeader.substring(10));
+
+            LoginContext lc = null;
+            GSSContext gssContext = null;
+            byte[] outToken = null;
+            try {
+                try {
+                    lc = new LoginContext(loginContextName);
+                    lc.login();
+                } catch (final LoginException e) {
+                    log.error("Unable to login due to {}", e, e.toString());
+                    throw new AuthException(e);
+                }
+
+                final Subject subject = lc.getSubject();
+
+                final GSSManager manager = GSSManager.getInstance();
+                final int credentialLifetime = GSSCredential.INDEFINITE_LIFETIME;
+
+                final PrivilegedExceptionAction<GSSCredential> action = new PrivilegedExceptionAction<GSSCredential>() {
+                    @Override
+                    public GSSCredential run() throws GSSException {
+                        return manager.createCredential(null, credentialLifetime, new Oid("1.3.6.1.5.5.2"), GSSCredential.ACCEPT_ONLY);
+                    }
+                };
+                gssContext = manager.createContext(Subject.doAs(subject, action));
+
+                outToken = Subject.doAs(lc.getSubject(), new AcceptAction(gssContext, decodedNegotiateHeader));
+
+                if (outToken == null) {
+                    log.trace("Ticket validation not successful");
+                    final BytesRestResponse wwwAuthenticateResponse = new BytesRestResponse(RestStatus.UNAUTHORIZED);
+                    wwwAuthenticateResponse.addHeader("WWW-Authenticate", "Negotiate");
+                    channel.sendResponse(wwwAuthenticateResponse);
+                    return null;
+                }
+
+                principal = Subject.doAs(subject, new AuthenticateAction(this, gssContext, strip));
+
+            } catch (final GSSException e) {
+                log.trace("Ticket validation not successful due to {}", e);
+                final BytesRestResponse wwwAuthenticateResponse = new BytesRestResponse(RestStatus.UNAUTHORIZED);
+                wwwAuthenticateResponse.addHeader("WWW-Authenticate", "Negotiate");
+                channel.sendResponse(wwwAuthenticateResponse);
+                return null;
+            } catch (final PrivilegedActionException e) {
+                final Throwable cause = e.getCause();
+                if (cause instanceof GSSException) {
+                    log.trace("Service login not successful due to {}", e.toString());
+                } else {
+                    log.error("Service login not successful due to {}", e.toString());
+                }
+                final BytesRestResponse wwwAuthenticateResponse = new BytesRestResponse(RestStatus.UNAUTHORIZED);
+                wwwAuthenticateResponse.addHeader("WWW-Authenticate", "Negotiate");
+                channel.sendResponse(wwwAuthenticateResponse);
+                return null;
+            } finally {
+                if (gssContext != null) {
+                    try {
+                        gssContext.dispose();
+                    } catch (final GSSException e) {
+                        // Ignore
+                    }
+                }
+                if (lc != null) {
+                    try {
+                        lc.logout();
+                    } catch (final LoginException e) {
+                        // Ignore
+                    }
+                }
+            }
+
+            if (principal == null) {
+
+                final BytesRestResponse wwwAuthenticateResponse = new BytesRestResponse(RestStatus.UNAUTHORIZED);
+                wwwAuthenticateResponse.addHeader("WWW-Authenticate", "Negotiate " + DatatypeConverter.printBase64Binary(outToken));
+                channel.sendResponse(wwwAuthenticateResponse);
+                throw new AuthException("Cannot authenticate");
+            }
+
+            //TODO FUTURE as privileged action?
+            final User authenticatedUser = backend.authenticate(new AuthCredentials(((SimpleUserPrincipal) principal).getName(),
+                    gssContext));
+            authorizator.fillRoles(authenticatedUser, new AuthCredentials(authenticatedUser.getName(), gssContext));
+
+            decodedNegotiateHeader = null;
+            authorizationHeader = null;
+
+            log.debug("User '{}' is authenticated", authenticatedUser);
+
+            return authenticatedUser;
         } else {
             log.trace("No 'Authorization' header, send 401 and 'WWW-Authenticate Negotiate'");
 

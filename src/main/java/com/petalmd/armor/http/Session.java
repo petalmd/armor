@@ -17,10 +17,10 @@
 
 package com.petalmd.armor.http;
 
+import com.petalmd.armor.authentication.User;
+
 import java.io.Serializable;
 import java.util.Date;
-
-import com.petalmd.armor.authentication.User;
 
 public class Session implements Serializable {
 

@@ -17,12 +17,12 @@
 
 package com.petalmd.armor.authentication;
 
+import org.apache.directory.api.ldap.model.entry.Entry;
+
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
-
-import org.apache.directory.api.ldap.model.entry.Entry;
 
 public class LdapUser extends User {
 

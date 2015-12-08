@@ -17,16 +17,15 @@
 
 package com.petalmd.armor.authorization.simple;
 
-import java.util.Arrays;
-
-import org.elasticsearch.common.inject.Inject;
-import org.elasticsearch.common.settings.Settings;
-
 import com.petalmd.armor.authentication.AuthCredentials;
 import com.petalmd.armor.authentication.AuthException;
 import com.petalmd.armor.authentication.User;
 import com.petalmd.armor.authorization.NonCachingAuthorizator;
 import com.petalmd.armor.util.ConfigConstants;
+import org.elasticsearch.common.inject.Inject;
+import org.elasticsearch.common.settings.Settings;
+
+import java.util.Arrays;
 
 public class SettingsBasedAuthorizator implements NonCachingAuthorizator {
 

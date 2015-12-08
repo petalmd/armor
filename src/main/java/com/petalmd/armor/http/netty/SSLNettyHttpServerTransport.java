@@ -17,38 +17,33 @@
 
 package com.petalmd.armor.http.netty;
 
-import java.io.File;
-import java.io.FileInputStream;
-import java.security.KeyStore;
-
-import javax.net.ssl.KeyManagerFactory;
-import javax.net.ssl.SSLContext;
-import javax.net.ssl.SSLEngine;
-import javax.net.ssl.SSLParameters;
-import javax.net.ssl.TrustManagerFactory;
-
+import com.petalmd.armor.util.ConfigConstants;
+import com.petalmd.armor.util.SecurityUtil;
 import org.elasticsearch.common.inject.Inject;
 import org.elasticsearch.common.logging.ESLogger;
 import org.elasticsearch.common.logging.Loggers;
-import org.jboss.netty.handler.ssl.SslHandler;
 import org.elasticsearch.common.network.NetworkService;
 import org.elasticsearch.common.settings.Settings;
 import org.elasticsearch.common.util.BigArrays;
 import org.elasticsearch.http.netty.NettyHttpServerTransport;
+import org.jboss.netty.channel.ChannelPipeline;
+import org.jboss.netty.channel.ChannelPipelineFactory;
+import org.jboss.netty.handler.ssl.SslHandler;
 
-import com.petalmd.armor.util.ConfigConstants;
-import com.petalmd.armor.util.SecurityUtil;
+import javax.net.ssl.*;
+import java.io.File;
+import java.io.FileInputStream;
+import java.security.KeyStore;
 
 public class SSLNettyHttpServerTransport extends NettyHttpServerTransport {
 
     @Inject
     public SSLNettyHttpServerTransport(final Settings settings, final NetworkService networkService, final BigArrays bigArrays) {
         super(settings, networkService, bigArrays);
-
     }
 
     @Override
-    public org.jboss.netty.channel.ChannelPipelineFactory configureServerChannelPipelineFactory() {
+    public ChannelPipelineFactory configureServerChannelPipelineFactory() {
         return new SSLHttpChannelPipelineFactory(this, this.settings, this.detailedErrorsEnabled);
     }
 
@@ -78,7 +73,7 @@ public class SSLNettyHttpServerTransport extends NettyHttpServerTransport {
         }
 
         @Override
-        public org.jboss.netty.channel.ChannelPipeline getPipeline() throws Exception {
+        public ChannelPipeline getPipeline() throws Exception {
 
             log.trace("SslHandler configured and added to netty pipeline");
 

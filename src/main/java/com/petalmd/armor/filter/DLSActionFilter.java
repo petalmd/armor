@@ -17,14 +17,9 @@
 
 package com.petalmd.armor.filter;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
-import java.util.Map.Entry;
-
+import com.petalmd.armor.authentication.backend.AuthenticationBackend;
+import com.petalmd.armor.authorization.Authorizator;
+import com.petalmd.armor.util.ConfigConstants;
 import org.elasticsearch.action.ActionListener;
 import org.elasticsearch.action.ActionRequest;
 import org.elasticsearch.action.get.GetRequest;
@@ -37,9 +32,8 @@ import org.elasticsearch.cluster.ClusterService;
 import org.elasticsearch.common.inject.Inject;
 import org.elasticsearch.common.settings.Settings;
 
-import com.petalmd.armor.authentication.backend.AuthenticationBackend;
-import com.petalmd.armor.authorization.Authorizator;
-import com.petalmd.armor.util.ConfigConstants;
+import java.util.*;
+import java.util.Map.Entry;
 
 public class DLSActionFilter extends AbstractActionFilter {
 

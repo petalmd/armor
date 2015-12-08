@@ -17,16 +17,15 @@
 
 package com.petalmd.armor.rest;
 
-import java.util.Arrays;
-import java.util.List;
-
+import com.petalmd.armor.audit.AuditListener;
+import com.petalmd.armor.service.ArmorService;
 import org.elasticsearch.rest.RestChannel;
 import org.elasticsearch.rest.RestFilterChain;
 import org.elasticsearch.rest.RestHandler;
 import org.elasticsearch.rest.RestRequest;
 
-import com.petalmd.armor.audit.AuditListener;
-import com.petalmd.armor.service.ArmorService;
+import java.util.Arrays;
+import java.util.List;
 
 public class RestActionFilter extends AbstractACRestFilter {
 

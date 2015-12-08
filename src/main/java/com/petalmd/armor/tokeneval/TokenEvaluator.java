@@ -17,23 +17,18 @@
 
 package com.petalmd.armor.tokeneval;
 
-import java.io.Serializable;
-import java.net.InetAddress;
-import java.util.Collections;
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Set;
-
+import com.google.common.collect.Lists;
+import com.petalmd.armor.authentication.User;
+import com.petalmd.armor.util.SecurityUtil;
 import org.codehaus.jackson.map.DeserializationConfig;
 import org.codehaus.jackson.map.ObjectMapper;
 import org.elasticsearch.common.bytes.BytesReference;
 import org.elasticsearch.common.logging.ESLogger;
 import org.elasticsearch.common.logging.Loggers;
 
-import com.petalmd.armor.authentication.User;
-import com.petalmd.armor.util.SecurityUtil;
-import com.google.common.collect.Lists;
+import java.io.Serializable;
+import java.net.InetAddress;
+import java.util.*;
 
 public class TokenEvaluator {
 

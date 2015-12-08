@@ -17,11 +17,13 @@
 
 package com.petalmd.armor.filter;
 
-import java.nio.charset.StandardCharsets;
-import java.util.Iterator;
-
-import javax.xml.bind.DatatypeConverter;
-
+import com.petalmd.armor.authentication.AuthCredentials;
+import com.petalmd.armor.authentication.User;
+import com.petalmd.armor.authentication.backend.AuthenticationBackend;
+import com.petalmd.armor.authorization.Authorizator;
+import com.petalmd.armor.service.ArmorService;
+import com.petalmd.armor.util.ConfigConstants;
+import com.petalmd.armor.util.SecurityUtil;
 import org.elasticsearch.action.ActionListener;
 import org.elasticsearch.action.ActionRequest;
 import org.elasticsearch.action.ActionResponse;
@@ -46,13 +48,9 @@ import org.elasticsearch.index.query.IdsQueryBuilder;
 import org.elasticsearch.search.SearchHit;
 import org.elasticsearch.search.builder.SearchSourceBuilder;
 
-import com.petalmd.armor.authentication.AuthCredentials;
-import com.petalmd.armor.authentication.User;
-import com.petalmd.armor.authentication.backend.AuthenticationBackend;
-import com.petalmd.armor.authorization.Authorizator;
-import com.petalmd.armor.service.ArmorService;
-import com.petalmd.armor.util.ConfigConstants;
-import com.petalmd.armor.util.SecurityUtil;
+import javax.xml.bind.DatatypeConverter;
+import java.nio.charset.StandardCharsets;
+import java.util.Iterator;
 
 public abstract class AbstractActionFilter implements ActionFilter {
 

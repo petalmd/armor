@@ -17,24 +17,22 @@
 
 package com.petalmd.armor;
 
-import org.elasticsearch.common.settings.ImmutableSettings;
-import org.elasticsearch.common.settings.Settings;
-import org.junit.Assert;
-import org.junit.Test;
-
 import com.petalmd.armor.authentication.AuthCredentials;
 import com.petalmd.armor.authentication.User;
 import com.petalmd.armor.authentication.backend.GuavaCachingAuthenticationBackend;
 import com.petalmd.armor.authentication.backend.simple.SettingsBasedAuthenticationBackend;
 import com.petalmd.armor.authorization.GuavaCachingAuthorizator;
 import com.petalmd.armor.authorization.simple.SettingsBasedAuthorizator;
+import org.elasticsearch.common.settings.Settings;
+import org.junit.Assert;
+import org.junit.Test;
 
 public class AuthCacheTest extends AbstractUnitTest {
 
     @Test
     public void testAuthentication() throws Exception {
 
-        final Settings settings = ImmutableSettings.settingsBuilder()
+        final Settings settings = Settings.settingsBuilder()
                 .put("armor.authentication.settingsdb.user.spock", "vulcan")
                 .put("armor.authentication.settingsdb.user.picard", "secret")
                 .build();
@@ -54,7 +52,7 @@ public class AuthCacheTest extends AbstractUnitTest {
     @Test
     public void testAuthorization() throws Exception {
 
-        final Settings settings = ImmutableSettings.settingsBuilder()
+        final Settings settings = Settings.settingsBuilder()
                 .putArray("armor.authentication.authorization.settingsdb.roles.spock", "kolinahr", "starfleet", "command")
                 .build();
 
@@ -76,7 +74,7 @@ public class AuthCacheTest extends AbstractUnitTest {
     @Test
     public void testBoth() throws Exception {
 
-        final Settings settings = ImmutableSettings.settingsBuilder()
+        final Settings settings = Settings.settingsBuilder()
                 .putArray("armor.authentication.authorization.settingsdb.roles.spock", "kolinahr", "starfleet", "command")
                 .put("armor.authentication.settingsdb.user.spock", "vulcan")
                 .put("armor.authentication.settingsdb.user.picard", "secret").build();
