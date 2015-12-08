@@ -20,7 +20,6 @@ package com.petalmd.armor;
 import javax.net.ssl.SSLHandshakeException;
 
 import org.apache.http.NoHttpResponseException;
-import org.elasticsearch.common.settings.ImmutableSettings;
 import org.elasticsearch.common.settings.Settings;
 import org.junit.Rule;
 import org.junit.Test;
@@ -38,7 +37,7 @@ public class SslTest extends AbstractScenarioTest {
 
         enableSSL = true;
 
-        final Settings settings = ImmutableSettings
+        final Settings settings = Settings
                 .settingsBuilder()
                 .putArray("armor.authentication.authorization.settingsdb.roles.jacksonm", "ceo")
                 .put("armor.authentication.settingsdb.user.jacksonm", "secret")
@@ -67,7 +66,7 @@ public class SslTest extends AbstractScenarioTest {
         enableSSL = true;
         enableSSLv3Only = true;
 
-        final Settings settings = ImmutableSettings
+        final Settings settings = Settings
                 .settingsBuilder()
                 .putArray("armor.authentication.authorization.settingsdb.roles.jacksonm", "ceo")
                 .put("armor.authentication.settingsdb.user.jacksonm", "secret")
@@ -95,7 +94,7 @@ public class SslTest extends AbstractScenarioTest {
 
         enableSSL = false;
 
-        final Settings settings = ImmutableSettings
+        final Settings settings = Settings
                 .settingsBuilder()
                 .putArray("armor.authentication.authorization.settingsdb.roles.jacksonm", "ceo")
                 .put("armor.authentication.settingsdb.user.jacksonm", "secret")
@@ -120,7 +119,7 @@ public class SslTest extends AbstractScenarioTest {
     @Test
     public void testNodeSSL() throws Exception {
 
-        final Settings settings = ImmutableSettings
+        final Settings settings = Settings
                 .settingsBuilder()
                 .putArray("armor.authentication.authorization.settingsdb.roles.jacksonm", "ceo")
                 .put("armor.authentication.settingsdb.user.jacksonm", "secret")
@@ -148,7 +147,7 @@ public class SslTest extends AbstractScenarioTest {
 
         enableSSL = true;
 
-        final Settings settings = ImmutableSettings
+        final Settings settings = Settings
                 .settingsBuilder()
                 .put("armor.authentication.http_authenticator.impl",
                         "com.petalmd.armor.authentication.http.clientcert.HTTPSClientCertAuthenticator")

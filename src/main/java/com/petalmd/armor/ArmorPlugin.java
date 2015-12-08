@@ -17,6 +17,7 @@
 
 package com.petalmd.armor;
 
+import java.util.ArrayList;
 import java.util.Collection;
 
 import com.petalmd.armor.transport.ArmorNettyTransport;
@@ -49,6 +50,7 @@ import com.petalmd.armor.service.ArmorService;
 import com.petalmd.armor.transport.SSLClientNettyTransport;
 import com.petalmd.armor.transport.SSLNettyTransport;
 import com.petalmd.armor.util.ConfigConstants;
+import org.elasticsearch.transport.TransportModule;
 
 //TODO FUTURE store users/roles also in elasticsearch search guard index
 //TODO FUTURE Multi authenticator/authorizator
@@ -70,7 +72,6 @@ public final class ArmorPlugin extends Plugin {
 
     //TODO make non static and check "enabled"
     static {
-
         if (Boolean.parseBoolean(System.getProperty(ArmorPlugin.ARMOR_DEBUG, "false"))) {
             System.setProperty("javax.net.debug", "all");
             System.setProperty("sun.security.krb5.debug", "true");
@@ -91,7 +92,7 @@ public final class ArmorPlugin extends Plugin {
             cc.addMethod(m);
 
             final CtMethod me = cc.getDeclaredMethod("createContext");
-            me.insertAt(574, "if(callback != null) {callback.onCreateContext(context, request);}");
+            me.insertAt(665, "if(callback != null) {callback.onCreateContext(context, request);}");
 
             cc.toClass();
             log.info("Class enhancements for DLS/FLS successful");
@@ -104,20 +105,24 @@ public final class ArmorPlugin extends Plugin {
     }
 
     public ArmorPlugin(final Settings settings) {
-
         this.settings = settings;
         enabled = this.settings.getAsBoolean(ConfigConstants.ARMOR_ENABLED, true);
         client = !"node".equals(this.settings.get(ArmorPlugin.CLIENT_TYPE, "node"));
     }
 
-    public void onModule(final RestModule module) {
+    public void onModule(RestModule module) {
         if (enabled && !client) {
             module.addRestAction(ArmorInfoAction.class);
         }
 
     }
 
-    public void onModule(final ActionModule module) {
+    //todo settings base
+    public void onModule(TransportModule transportModule) {
+        transportModule.setTransport(ArmorNettyTransport.class, this.name());
+    }
+
+    public void onModule(ActionModule module) {
         if (enabled && !client) {
             module.registerFilter(ArmorActionFilter.class);
             module.registerFilter(RequestActionFilter.class);
@@ -127,8 +132,8 @@ public final class ArmorPlugin extends Plugin {
     }
 
     @SuppressWarnings("rawtypes")
-    public Collection<Class<? extends LifecycleComponent>> services() {
-
+    @Override
+    public Collection<Class<? extends LifecycleComponent>> nodeServices() {
         if (enabled && !client) {
             return ImmutableList.<Class<? extends LifecycleComponent>> of(ArmorService.class, ArmorConfigService.class);
         }
@@ -136,9 +141,12 @@ public final class ArmorPlugin extends Plugin {
     }
 
     @SuppressWarnings("rawtypes")
-    public Collection<Class<? extends Module>> modules() {
+    @Override
+    public Collection<Module> nodeModules() {
         if (enabled && !client) {
-            return ImmutableList.<Class<? extends Module>> of(AuthModule.class);
+            Collection<Module> modules = new ArrayList<>();
+            modules.add(new AuthModule(settings));
+            return modules;
         }
         return ImmutableList.of();
     }
@@ -147,7 +155,7 @@ public final class ArmorPlugin extends Plugin {
     public Settings additionalSettings() {
         if (enabled) {
             checkSSLConfig();
-            final org.elasticsearch.common.settings.Settings.Builder builder = Settings.settingsBuilder();
+            final Settings.Builder builder = Settings.settingsBuilder();
             if (settings.getAsBoolean(ConfigConstants.ARMOR_SSL_TRANSPORT_NODE_ENABLED, false)) {
                 builder.put(ArmorPlugin.TRANSPORT_TYPE, client ? SSLClientNettyTransport.class : SSLNettyTransport.class);
             } else if (!client) {
@@ -201,12 +209,12 @@ public final class ArmorPlugin extends Plugin {
 
     @Override
     public String description() {
-        return "Search Guard" + (enabled ? "" : " (disabled)");
+        return "Armor" + (enabled ? "" : " (disabled)");
     }
 
     @Override
     public String name() {
-        return "armor" + (enabled ? "" : " (disabled)");
+        return "Armor" + (enabled ? "" : " (disabled)");
     }
 
 }

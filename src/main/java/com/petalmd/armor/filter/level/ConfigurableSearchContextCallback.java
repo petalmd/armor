@@ -30,7 +30,7 @@ import org.elasticsearch.common.logging.ESLogger;
 import org.elasticsearch.common.logging.Loggers;
 import org.elasticsearch.common.lucene.search.Queries;
 import org.elasticsearch.common.settings.Settings;
-import org.elasticsearch.index.query.ParsedFilter;
+import org.elasticsearch.index.query.ParsedQuery;
 import org.elasticsearch.search.fetch.source.FetchSourceContext;
 import org.elasticsearch.search.internal.SearchContext;
 import org.elasticsearch.search.internal.ShardSearchRequest;
@@ -158,7 +158,7 @@ public class ConfigurableSearchContextCallback implements SearchContextCallback 
 
                     //log.trace("filterStrings {}", list);
 
-                    final ParsedFilter origfilter = context.parsedPostFilter();
+                    final ParsedQuery origfilter = context.parsedPostFilter();
                     final List<Query> qliste = new ArrayList<Query>();
 
                     if (list.isEmpty()) {
@@ -328,13 +328,16 @@ public class ConfigurableSearchContextCallback implements SearchContextCallback 
                             break;
                     }
 
-                    if (origfilter == null) {
-                        context.parsedPostFilter(new ParsedFilter(new AndFilter(qliste), Map.<String, Filter> builder().build()));
-                    } else {
-                        qliste.add(origfilter.filter());
-                        context.parsedPostFilter(new ParsedFilter(new AndFilter(qliste), origfilter.namedFilters()));
-                    }
+                    BooleanQuery boolQuery = new BooleanQuery();
+                    for (Query innerFilter : qliste) {
+                        boolQuery.add(innerFilter, BooleanClause.Occur.MUST);
 
+                        if (origfilter == null) {
+                            context.parsedPostFilter(new ParsedQuery(boolQuery));
+                        } else {
+                            context.parsedPostFilter(new ParsedQuery(boolQuery, origfilter.namedFilters()));
+                        }
+                    }
                 }
 
                 if ("flsfilter".equals(ft)) {
@@ -378,41 +381,6 @@ public class ConfigurableSearchContextCallback implements SearchContextCallback 
                         log.trace("survivingFields {}", survivingFields.equals(fields) ? "-all-" : survivingFields.toString());
                         fields.retainAll(survivingFields);
                     }
-
-//                    if (context.hasPartialFields()) {
-//                        fieldsDone = true;
-//                        final PartialFieldsContext partialFieldsContext = context.partialFields();
-//                        final List<PartialField> partialFields = partialFieldsContext.fields();
-//                        final List<PartialField> survivingFields = new ArrayList<PartialField>(partialFields);
-//                        for (final Iterator<PartialField> iterator = partialFields.iterator(); iterator.hasNext();) {
-//                            final PartialField field = iterator.next();
-//
-//                            for (final Iterator<String> iteratorExcludes = sourceExcludes.iterator(); iteratorExcludes.hasNext();) {
-//                                final String exclude = iteratorExcludes.next();
-//                                final String[] fieldExcludes = field.includes();
-//
-//                                for (int j = 0; j < fieldExcludes.length; j++) {
-//                                    if (SecurityUtil.isWildcardMatch(fieldExcludes[j], exclude, false)) {
-//                                        survivingFields.remove(field);
-//                                    }
-//                                }
-//                            }
-//
-//                            /*for (Iterator<String> iteratorIncludes = sourceIncludes.iterator(); iteratorIncludes.hasNext();) {
-//                                String include = iteratorIncludes.next();
-//                                if(SecurityUtil.isWildcardMatch(field, include, false)) {
-//                                    if(!survivingFields.contains(field)) {
-//                                        survivingFields.add(field);
-//                                    }
-//                                }
-//
-//                            }*/
-//
-//                        }
-//
-//                        log.trace("survivingPartialFields {}", survivingFields.equals(partialFields) ? "-all-" : survivingFields.toString());
-//                        partialFields.retainAll(survivingFields);
-//                    }
 
                     //TODO FUTURE include exclude precedence, what if null or empty?
 
