@@ -24,7 +24,6 @@ import java.util.Map;
 
 import org.apache.http.HttpResponse;
 import org.elasticsearch.common.collect.Tuple;
-import org.elasticsearch.common.settings.ImmutableSettings;
 import org.elasticsearch.common.settings.Settings;
 import org.junit.Assert;
 import org.junit.Test;
@@ -43,7 +42,7 @@ public class MiscTest extends AbstractUnitTest {
     @Test
     public void unauthenticatedTest() throws Exception {
 
-        final Settings settings = ImmutableSettings
+        final Settings settings = Settings
                 .settingsBuilder()
                 .putArray("armor.restactionfilter.names", "readonly")
                 .putArray("armor.restactionfilter.readonly.allowed_actions", "*")
@@ -73,7 +72,7 @@ public class MiscTest extends AbstractUnitTest {
     @Test
     public void testClusterMonitorDisable() throws Exception {
 
-        final Settings settings = ImmutableSettings
+        final Settings settings = Settings
                 .settingsBuilder()
                 .putArray("armor.actionrequestfilter.names", "allowHealth")
                 .putArray("armor.actionrequestfilter.allowHealth.allowed_actions", "cluster:monitor/health")

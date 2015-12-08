@@ -17,7 +17,6 @@
 
 package com.petalmd.armor;
 
-import org.elasticsearch.common.settings.ImmutableSettings;
 import org.elasticsearch.common.settings.Settings;
 import org.junit.Test;
 
@@ -30,7 +29,7 @@ public class WindowsTest extends AbstractScenarioTest {
 
         useSpnego = true;
 
-        final Settings settings = ImmutableSettings
+        final Settings settings = Settings
                 .settingsBuilder()
                 .put("armor.authentication.http_authenticator", "com.petalmd.armor.authentication.http.waffle.HTTPWaffleAuthenticator")
 

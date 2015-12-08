@@ -21,7 +21,6 @@ import java.net.URL;
 
 import net.sourceforge.spnego.SpnegoHttpURLConnection;
 
-import org.elasticsearch.common.settings.ImmutableSettings;
 import org.elasticsearch.common.settings.Settings;
 import org.junit.Assert;
 import org.junit.Test;
@@ -37,7 +36,7 @@ public class SfSpNegoTest extends AbstractUnitTest {
         startLDAPServer();
         ldapServer.applyLdif(SecurityUtil.getAbsoluteFilePathFromClassPath("ldif1.ldif"));
 
-        final Settings settings = ImmutableSettings
+        final Settings settings = Settings
                 .settingsBuilder()
                 .putArray("armor.restactionfilter.names", "readonly")
                 .putArray("armor.restactionfilter.readonly.allowed_actions", "RestSearchAction")

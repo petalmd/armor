@@ -22,6 +22,7 @@ import java.io.IOException;
 import org.elasticsearch.Version;
 import org.elasticsearch.cluster.node.DiscoveryNode;
 import org.elasticsearch.common.inject.Inject;
+import org.elasticsearch.common.io.stream.NamedWriteableRegistry;
 import org.elasticsearch.common.logging.ESLogger;
 import org.elasticsearch.common.logging.Loggers;
 import org.elasticsearch.common.network.NetworkService;
@@ -35,23 +36,24 @@ import org.elasticsearch.transport.netty.NettyTransport;
 
 import com.petalmd.armor.service.ArmorService;
 import com.petalmd.armor.util.SecurityUtil;
+import org.jboss.netty.channel.ChannelPipeline;
+import org.jboss.netty.channel.ChannelPipelineFactory;
 
 public class ArmorNettyTransport extends NettyTransport {
 
     @Inject
     public ArmorNettyTransport(final Settings settings, final ThreadPool threadPool, final NetworkService networkService,
                                final BigArrays bigArrays, final Version version) {
-        super(settings, threadPool, networkService, bigArrays, version);
-
+        super(settings, threadPool, networkService, bigArrays, version, new NamedWriteableRegistry());
     }
 
     @Override
-    public org.jboss.netty.channel.ChannelPipelineFactory configureClientChannelPipelineFactory() {
+    public ChannelPipelineFactory configureClientChannelPipelineFactory() {
         return new ArmorClientChannelPipelineFactory(this);
     }
 
     @Override
-    public org.jboss.netty.channel.ChannelPipelineFactory configureServerChannelPipelineFactory(final String name,
+    public ChannelPipelineFactory configureServerChannelPipelineFactory(final String name,
             final Settings settings) {
         return new ArmorServerChannelPipelineFactory(this, name, settings);
     }
@@ -87,7 +89,7 @@ public class ArmorNettyTransport extends NettyTransport {
         }
 
         @Override
-        public org.jboss.netty.channel.ChannelPipeline getPipeline() throws Exception {
+        public ChannelPipeline getPipeline() throws Exception {
             final org.jboss.netty.channel.ChannelPipeline pipeline = super.getPipeline();
             pipeline.replace("dispatcher", "dispatcher", new ArmorMessageChannelHandler(nettyTransport, log));
             return pipeline;
@@ -105,8 +107,8 @@ public class ArmorNettyTransport extends NettyTransport {
         }
 
         @Override
-        public org.jboss.netty.channel.ChannelPipeline getPipeline() throws Exception {
-            final org.jboss.netty.channel.ChannelPipeline pipeline = super.getPipeline();
+        public ChannelPipeline getPipeline() throws Exception {
+            final ChannelPipeline pipeline = super.getPipeline();
             pipeline.replace("dispatcher", "dispatcher", new ArmorMessageChannelHandler(nettyTransport, log));
             return pipeline;
         }

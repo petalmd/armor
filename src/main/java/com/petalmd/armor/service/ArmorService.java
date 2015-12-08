@@ -120,7 +120,7 @@ public class ArmorService extends AbstractLifecycleComponent<ArmorService> {
             searchServiceSetCallbackMethod.invoke(searchService, new ConfigurableSearchContextCallback(settings, auditListener));
         } catch (final Exception e) {
             log.error(e.toString(), e);
-            //throw new ElasticsearchException(e.toString());
+            throw new ElasticsearchException(e.toString());
         }
 
         this.auditListener = auditListener;
@@ -225,8 +225,8 @@ public class ArmorService extends AbstractLifecycleComponent<ArmorService> {
             throw new ElasticsearchException("No filter configured");
         }*/
 
-        // log.info("Starting Search Guard with {} filters",
-        //         (restActionFilters.length + dlsFilters.length + flsFilters.length + arFilters.length));
+//        log.info("Starting Search Guard with {} filters",
+//            (restActionFilters.length + dlsFilters.length + flsFilters.length + arFilters.length));
 
         log.trace("With settings " + this.settings.getAsMap());
 
