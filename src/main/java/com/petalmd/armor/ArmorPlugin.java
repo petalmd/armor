@@ -36,6 +36,7 @@ import org.apache.commons.lang.StringUtils;
 import org.elasticsearch.common.logging.ESLogger;
 import org.elasticsearch.common.logging.Loggers;
 import org.elasticsearch.common.settings.Settings;
+import org.elasticsearch.http.HttpServerModule;
 import org.elasticsearch.plugins.Plugin;
 import org.elasticsearch.rest.RestModule;
 
@@ -50,6 +51,7 @@ import com.petalmd.armor.service.ArmorService;
 import com.petalmd.armor.transport.SSLClientNettyTransport;
 import com.petalmd.armor.transport.SSLNettyTransport;
 import com.petalmd.armor.util.ConfigConstants;
+import org.elasticsearch.transport.Transport;
 import org.elasticsearch.transport.TransportModule;
 
 //TODO FUTURE store users/roles also in elasticsearch search guard index
@@ -122,6 +124,12 @@ public final class ArmorPlugin extends Plugin {
         transportModule.setTransport(ArmorNettyTransport.class, this.name());
     }
 
+    public void onModule(HttpServerModule httpServerModue) {
+        if (settings.getAsBoolean(ConfigConstants.ARMOR_SSL_TRANSPORT_HTTP_ENABLED, false)) {
+            httpServerModue.setHttpServerTransport(SSLNettyHttpServerTransport.class, this.name());
+        }
+    }
+
     public void onModule(ActionModule module) {
         if (enabled && !client) {
             module.registerFilter(ArmorActionFilter.class);
@@ -163,10 +171,6 @@ public final class ArmorPlugin extends Plugin {
             }
 
             if (!client) {
-                if (settings.getAsBoolean(ConfigConstants.ARMOR_SSL_TRANSPORT_HTTP_ENABLED, false)) {
-                    builder.put(ArmorPlugin.HTTP_TYPE, SSLNettyHttpServerTransport.class);
-                }
-
                 if (settings.getAsBoolean(ArmorPlugin.BULK_UDP_ENABLED, false)) {
                     log.error("UDP Bulk service enabled, will disable it because its unsafe and deprecated");
                 }

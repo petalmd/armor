@@ -17,10 +17,14 @@
 
 package com.petalmd.armor;
 
+import com.petalmd.armor.http.netty.SSLNettyHttpServerTransport;
 import org.elasticsearch.common.Classes;
 import org.elasticsearch.common.inject.AbstractModule;
 import org.elasticsearch.common.settings.Settings;
 
+import org.elasticsearch.http.HttpServerModule;
+import org.elasticsearch.http.HttpServerTransport;
+import org.elasticsearch.http.netty.NettyHttpServerTransport;
 import waffle.windows.auth.IWindowsAuthProvider;
 import waffle.windows.auth.impl.WindowsAuthProviderImpl;
 

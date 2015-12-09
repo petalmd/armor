@@ -14,7 +14,7 @@
  * limitations under the License.
  * 
  */
-
+/*
 package com.petalmd.armor.filter;
 
 import java.io.Serializable;
@@ -147,3 +147,4 @@ public class Filter implements Serializable {
     }
 
 }
+*/

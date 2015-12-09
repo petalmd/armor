@@ -30,6 +30,8 @@ import javax.net.ssl.TrustManagerFactory;
 import org.elasticsearch.common.inject.Inject;
 import org.elasticsearch.common.logging.ESLogger;
 import org.elasticsearch.common.logging.Loggers;
+import org.jboss.netty.channel.ChannelPipeline;
+import org.jboss.netty.channel.ChannelPipelineFactory;
 import org.jboss.netty.handler.ssl.SslHandler;
 import org.elasticsearch.common.network.NetworkService;
 import org.elasticsearch.common.settings.Settings;
@@ -44,11 +46,10 @@ public class SSLNettyHttpServerTransport extends NettyHttpServerTransport {
     @Inject
     public SSLNettyHttpServerTransport(final Settings settings, final NetworkService networkService, final BigArrays bigArrays) {
         super(settings, networkService, bigArrays);
-
     }
 
     @Override
-    public org.jboss.netty.channel.ChannelPipelineFactory configureServerChannelPipelineFactory() {
+    public ChannelPipelineFactory configureServerChannelPipelineFactory() {
         return new SSLHttpChannelPipelineFactory(this, this.settings, this.detailedErrorsEnabled);
     }
 
@@ -78,7 +79,7 @@ public class SSLNettyHttpServerTransport extends NettyHttpServerTransport {
         }
 
         @Override
-        public org.jboss.netty.channel.ChannelPipeline getPipeline() throws Exception {
+        public ChannelPipeline getPipeline() throws Exception {
 
             log.trace("SslHandler configured and added to netty pipeline");
 
