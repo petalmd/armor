@@ -2,16 +2,7 @@ package com.petalmd.armor;
 
 import java.io.IOException;
 import java.net.InetAddress;
-import java.security.SecureRandom;
 
-import javax.crypto.KeyGenerator;
-import javax.crypto.SecretKey;
-
-import org.elasticsearch.ElasticsearchException;
-import org.elasticsearch.action.get.GetRequest;
-import org.elasticsearch.action.get.GetResponse;
-import org.elasticsearch.action.index.IndexRequest;
-import org.elasticsearch.action.index.IndexResponse;
 import org.elasticsearch.action.search.SearchRequest;
 import org.elasticsearch.action.search.SearchResponse;
 import org.elasticsearch.client.Client;
@@ -22,8 +13,6 @@ import org.elasticsearch.common.transport.InetSocketTransportAddress;
 import org.junit.Assert;
 import org.junit.Test;
 
-import com.petalmd.armor.authorization.ForbiddenException;
-import com.petalmd.armor.service.ArmorService;
 import com.petalmd.armor.util.ConfigConstants;
 import com.petalmd.armor.util.SecurityUtil;
 
@@ -39,9 +28,9 @@ public class TransportTest extends AbstractUnitTest {
                 .put(ConfigConstants.ARMOR_TRANSPORT_AUTH_ENABLED, true)
                 .put(ConfigConstants.ARMOR_SSL_TRANSPORT_NODE_ENABLED, true)
                 .put(ConfigConstants.ARMOR_SSL_TRANSPORT_NODE_KEYSTORE_FILEPATH,
-                        SecurityUtil.getAbsoluteFilePathFromClassPath("SearchguardKS.jks"))
+                        SecurityUtil.getAbsoluteFilePathFromClassPath("ArmorKS.jks"))
                         .put(ConfigConstants.ARMOR_SSL_TRANSPORT_NODE_TRUSTSTORE_FILEPATH,
-                                SecurityUtil.getAbsoluteFilePathFromClassPath("SearchguardTS.jks"))
+                                SecurityUtil.getAbsoluteFilePathFromClassPath("ArmorTS.jks"))
                                 .put(ConfigConstants.ARMOR_SSL_TRANSPORT_NODE_ENCFORCE_HOSTNAME_VERIFICATION, false)
 
                                 .put(getAuthSettings(false, "ceo")).build();
@@ -87,9 +76,9 @@ public class TransportTest extends AbstractUnitTest {
                 .put(ConfigConstants.ARMOR_TRANSPORT_AUTH_ENABLED, true)
                 .put(ConfigConstants.ARMOR_SSL_TRANSPORT_NODE_ENABLED, true)
                 .put(ConfigConstants.ARMOR_SSL_TRANSPORT_NODE_KEYSTORE_FILEPATH,
-                        SecurityUtil.getAbsoluteFilePathFromClassPath("SearchguardKS.jks"))
+                        SecurityUtil.getAbsoluteFilePathFromClassPath("ArmorKS.jks"))
                         .put(ConfigConstants.ARMOR_SSL_TRANSPORT_NODE_TRUSTSTORE_FILEPATH,
-                                SecurityUtil.getAbsoluteFilePathFromClassPath("SearchguardTS.jks"))
+                                SecurityUtil.getAbsoluteFilePathFromClassPath("ArmorTS.jks"))
                                 .put(ConfigConstants.ARMOR_SSL_TRANSPORT_NODE_ENCFORCE_HOSTNAME_VERIFICATION, false)
                                 .put(getAuthSettings(false, "ceo")).build();
 
@@ -104,9 +93,9 @@ public class TransportTest extends AbstractUnitTest {
                 .put("cluster.name", "armor_testcluster")
                 .put(ConfigConstants.ARMOR_SSL_TRANSPORT_NODE_ENABLED, true)
                 .put(ConfigConstants.ARMOR_SSL_TRANSPORT_NODE_KEYSTORE_FILEPATH,
-                        SecurityUtil.getAbsoluteFilePathFromClassPath("SearchguardKS.jks"))
+                        SecurityUtil.getAbsoluteFilePathFromClassPath("ArmorKS.jks"))
                         .put(ConfigConstants.ARMOR_SSL_TRANSPORT_NODE_TRUSTSTORE_FILEPATH,
-                                SecurityUtil.getAbsoluteFilePathFromClassPath("SearchguardTS.jks"))
+                                SecurityUtil.getAbsoluteFilePathFromClassPath("ArmorTS.jks"))
                                 .put(ConfigConstants.ARMOR_SSL_TRANSPORT_NODE_ENCFORCE_HOSTNAME_VERIFICATION, false).build();
 
         final Client tc = new TransportClient.Builder()

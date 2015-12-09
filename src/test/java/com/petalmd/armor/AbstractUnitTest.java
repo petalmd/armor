@@ -70,8 +70,6 @@ import org.apache.mina.util.AvailablePortFinder;
 import org.elasticsearch.ElasticsearchTimeoutException;
 import org.elasticsearch.action.admin.cluster.health.ClusterHealthResponse;
 import org.elasticsearch.action.admin.cluster.health.ClusterHealthStatus;
-import org.elasticsearch.action.admin.indices.delete.DeleteIndexRequest;
-import org.elasticsearch.action.admin.indices.delete.DeleteIndexResponse;
 import org.elasticsearch.client.Client;
 import org.elasticsearch.common.collect.Tuple;
 import org.elasticsearch.common.logging.ESLogger;
@@ -494,11 +492,11 @@ public abstract class AbstractUnitTest {
             log.debug("Configure Jest with SSL");
 
             final KeyStore myTrustStore = KeyStore.getInstance("JKS");
-            myTrustStore.load(new FileInputStream(SecurityUtil.getAbsoluteFilePathFromClassPath("SearchguardTS.jks")),
+            myTrustStore.load(new FileInputStream(SecurityUtil.getAbsoluteFilePathFromClassPath("ArmorTS.jks")),
                     "changeit".toCharArray());
 
             final KeyStore keyStore = KeyStore.getInstance("JKS");
-            keyStore.load(new FileInputStream(SecurityUtil.getAbsoluteFilePathFromClassPath("SearchguardKS.jks")), "changeit".toCharArray());
+            keyStore.load(new FileInputStream(SecurityUtil.getAbsoluteFilePathFromClassPath("ArmorKS.jks")), "changeit".toCharArray());
 
             final SSLContext sslContext = SSLContexts.custom().useTLS().loadKeyMaterial(keyStore, "changeit".toCharArray())
                     .loadTrustMaterial(myTrustStore).build();

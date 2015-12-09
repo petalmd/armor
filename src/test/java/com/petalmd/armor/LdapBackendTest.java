@@ -82,7 +82,7 @@ public class LdapBackendTest extends AbstractUnitTest {
                 .put("armor.authentication.ldap.ldaps.starttls.enabled", "false")
 
                 .put("armor.authentication.ldap.ldaps.truststore_filepath",
-                        SecurityUtil.getAbsoluteFilePathFromClassPath("SearchguardTS.jks")).build();
+                        SecurityUtil.getAbsoluteFilePathFromClassPath("ArmorTS.jks")).build();
 
         ldapServer.applyLdif(SecurityUtil.getAbsoluteFilePathFromClassPath("ldif1.ldif"));
 
@@ -105,7 +105,7 @@ public class LdapBackendTest extends AbstractUnitTest {
                 .put("armor.authentication.ldap.ldaps.starttls.enabled", "false")
 
                 .put("armor.authentication.ldap.ldaps.truststore_filepath",
-                        SecurityUtil.getAbsoluteFilePathFromClassPath("SearchguardTS.jks")).build();
+                        SecurityUtil.getAbsoluteFilePathFromClassPath("ArmorTS.jks")).build();
 
         ldapServer.applyLdif(SecurityUtil.getAbsoluteFilePathFromClassPath("ldif1.ldif"));
 
@@ -127,7 +127,7 @@ public class LdapBackendTest extends AbstractUnitTest {
                 .put("armor.authentication.ldap.ldaps.ssl.enabled", "false")
                 .put("armor.authentication.ldap.ldaps.starttls.enabled", "true")
                 .put("armor.authentication.ldap.ldaps.truststore_filepath",
-                        SecurityUtil.getAbsoluteFilePathFromClassPath("SearchguardTS.jks")).build();
+                        SecurityUtil.getAbsoluteFilePathFromClassPath("ArmorTS.jks")).build();
 
         ldapServer.applyLdif(SecurityUtil.getAbsoluteFilePathFromClassPath("ldif1.ldif"));
 
@@ -150,7 +150,7 @@ public class LdapBackendTest extends AbstractUnitTest {
                 .put("armor.authentication.ldap.ldaps.starttls.enabled", "false")
 
                 .put("armor.authentication.ldap.ldaps.truststore_filepath",
-                        SecurityUtil.getAbsoluteFilePathFromClassPath("SearchguardTS.jks")).build();
+                        SecurityUtil.getAbsoluteFilePathFromClassPath("ArmorTS.jks")).build();
 
         ldapServer.applyLdif(SecurityUtil.getAbsoluteFilePathFromClassPath("ldif1.ldif"));
 
