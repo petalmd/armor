@@ -30,6 +30,9 @@ armor.rewrite_get_as_search: true
 # If this is true (default is false) then allow all HTTP REST requests from nodes loopback (e.g. localhost)
 #armor.allow_all_from_loopback: false
 
+#if this is false (default is true) then all cluster:monitor actions have to be explicitely allowed. By default, they are all allowed except when they are denied explicitely.  
+#armor.allow_cluster_monitor: true
+
 # If this is true (default: false) then enable authenticated transports requests (e.g. TransportClient authentication)
 # This can be done in that way (for example): 
 # TransportClient.get(new GetRequest("marketing", "customer", "tp_3").putHeader("armor_transport_creds", "c2FseWg6c2VjcmV0"))
