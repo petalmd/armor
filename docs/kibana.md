@@ -17,11 +17,33 @@ armor.authentication.settingsdb.user.julien: ABCD1234...
 armor.authentication.authorization.settingsdb.roles.kibana: ["kibana"]
 armor.authentication.authorization.settingsdb.roles.julien: ["kibana", "stats_ro"]
 ```
+
+If you set armor.allow_cluster_monitor at false, you will have to create a filter to authorize the 2 following actions
+ -cluster:monitor/health
+ -cluster:monitor/nodes/info
+
+```YAML
+armor.actionrequestfilter.names: ["defaultfilter", "readwrite"]
+
+armor.actionrequestfilter.defaultfilter.allowed_actions: [
+ "cluster:monitor/health",
+ "cluster:monitor/nodes/info",
+]
+
+ ...
+
+```
+
 ACL example:
 
 ```
 curl -XPUT 'http://127.0.0.1:9200/armor/ac/ac?pretty' -d '
 {"acl": [
+  {
+    "__Comment__": "Default filter",
+    "filters_bypass": [],
+    "filters_execute": ["defaultfilter"]
+  },
   {
     "__Comment__": "Internal kibana index",
     "roles": ["kibana"],
@@ -45,7 +67,7 @@ You need to uncomment `kibana_elasticsearch_username` and `kibana_elasticsearch_
 This user will only be use for kibana to start and need access to `.kibana`indice. 
 Once a user would like to use Kibana, Kibana will ask for a user/pass and will forward the credential to Elasticsearch.
 
-```yaml
+```YAML
 # If your Elasticsearch is protected with basic auth, this is the user credentials
 # used by the Kibana server to perform maintence on the kibana_index at statup. Your Kibana
 # users will still need to authenticate with Elasticsearch (which is proxied thorugh
