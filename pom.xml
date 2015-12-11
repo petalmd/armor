@@ -332,6 +332,7 @@
                 <artifactId>maven-surefire-plugin</artifactId>
                 <version>2.19</version>
                 <configuration>
+                    <runOrder>alphabetical</runOrder>
                     <includes>
                         <include>**/*Test*.java</include>
                     </includes>
