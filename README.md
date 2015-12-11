@@ -334,6 +334,8 @@ TODO
 Contributions, questions, and comments are all welcomed and encouraged!
 
 ## License
+This project derives from [Search-guard 1.6](https://github.com/floragunncom/search-guard) 
+
 Copyright 2015 PetalMD
 
 Licensed under the Apache License, Version 2.0 (the "License");

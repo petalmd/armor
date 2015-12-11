@@ -99,7 +99,7 @@ public class MiscTest extends AbstractUnitTest {
 
         final JestClient client = getJestClient(getServerUri(false), username, password);
 
-        final JestResult jr = client.execute(new PutMapping.Builder("_all", "ac", "\"ac\" : {" + "\"properties\" : {"
+        final JestResult jr = client.execute(new PutMapping.Builder("_all", "ac", "{" + "\"properties\" : {"
                 + "\"rules\" : {\"type\" : \"string\", \"store\" : true }" + "}" + "}"
 
         ).setHeader(headers).build());

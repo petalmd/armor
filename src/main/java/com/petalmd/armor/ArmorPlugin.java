@@ -119,9 +119,12 @@ public final class ArmorPlugin extends Plugin {
 
     }
 
-    //todo settings base
     public void onModule(TransportModule transportModule) {
-        transportModule.setTransport(ArmorNettyTransport.class, this.name());
+        if (settings.getAsBoolean(ConfigConstants.ARMOR_SSL_TRANSPORT_NODE_ENABLED, false)) {
+            transportModule.setTransport(client ? SSLClientNettyTransport.class : SSLNettyTransport.class, this.name());
+        } else {
+            transportModule.setTransport(ArmorNettyTransport.class, this.name());
+        }
     }
 
     public void onModule(HttpServerModule httpServerModue) {

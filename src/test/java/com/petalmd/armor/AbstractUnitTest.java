@@ -488,7 +488,6 @@ public abstract class AbstractUnitTest {
         hcb.setDefaultCredentialsProvider(credsProvider);
 
         if (serverUri.startsWith("https")) {
-
             log.debug("Configure Jest with SSL");
 
             final KeyStore myTrustStore = KeyStore.getInstance("JKS");
@@ -516,7 +515,7 @@ public abstract class AbstractUnitTest {
 
         }
 
-        hcb.setDefaultSocketConfig(SocketConfig.custom().setSoTimeout(120 * 1000).build());
+        hcb.setDefaultSocketConfig(SocketConfig.custom().setSoTimeout(60 * 1000).build());
 
         final CloseableHttpClient httpClient = hcb.build();
 
@@ -526,18 +525,14 @@ public abstract class AbstractUnitTest {
     }
 
     protected final void setupTestData(final String armorConfig) throws Exception {
-try {
-    executeIndex("dummy_content.json", "ceo", "internal", "tp_1", true, true);
-    executeIndex("dummy_content.json", "marketing", "flyer", "tp_2", true, true);
-    executeIndex("dummy_content.json", "marketing", "customer", "tp_3", true, true);
-    executeIndex("dummy_content.json", "marketing", "customer", "tp_4", true, true);
-    executeIndex("dummy_content.json", "financial", "public", "t2p_5", true, true);
-    executeIndex("dummy_content.json", "financial", "sensitivestuff", "t2p_6", true, true);
-    executeIndex("dummy_content.json", "financial", "sensitivestuff", "t2p_7", true, true);
-} catch (Exception e) {
-    log.error("error");
-    throw e;
-}
+        executeIndex("dummy_content.json", "ceo", "internal", "tp_1", true, true);
+        executeIndex("dummy_content.json", "marketing", "flyer", "tp_2", true, true);
+        executeIndex("dummy_content.json", "marketing", "customer", "tp_3", true, true);
+        executeIndex("dummy_content.json", "marketing", "customer", "tp_4", true, true);
+        executeIndex("dummy_content.json", "financial", "public", "t2p_5", true, true);
+        executeIndex("dummy_content.json", "financial", "sensitivestuff", "t2p_6", true, true);
+        executeIndex("dummy_content.json", "financial", "sensitivestuff", "t2p_7", true, true);
+
         for (int i = 0; i < 30; i++) {
             executeIndex("dummy_content.json", "public", "info", "t2pat_" + i, true, true);
         }
@@ -545,9 +540,16 @@ try {
         executeIndex("dummy_content2.json", "future", "docs", "f_1", true, true);
         executeIndex("dummy_content2.json", "future", "docs", "f_2", true, true);
 
-        esNode1.client().admin().indices().prepareAliases().addAlias(new String[] { "ceo", "financial" }, "crucial").execute().actionGet();
-        esNode1.client().admin().indices().prepareAliases().addAlias(new String[] { "crucial", "marketing" }, "internal").execute()
-        .actionGet();
+        esNode1.client().admin().indices()
+                .prepareAliases()
+                .addAlias(new String[] { "ceo", "financial" }, "crucial")
+                .execute()
+                .actionGet();
+        esNode1.client().admin().indices()
+                .prepareAliases()
+                .addAlias(new String[] { "crucial", "marketing" }, "internal")
+                .execute()
+                .actionGet();
 
         executeIndex(armorConfig, "armor", "ac", "ac", true, true);
     }
@@ -581,7 +583,6 @@ try {
                 log.debug("... cluster state ok");
             }
         } catch (final ElasticsearchTimeoutException e) {
-            log.error("FIEWWWWWW");
             throw new IOException("timeout, cluster does not respond to health request, cowardly refusing to continue with operations");
         }
     }
@@ -607,7 +608,8 @@ try {
     }
 
     protected Settings.Builder cacheEnabled(final boolean cache) {
-        return Settings.settingsBuilder().put("armor.authentication.authorizer.cache.enable", cache)
+        return Settings.settingsBuilder()
+                .put("armor.authentication.authorizer.cache.enable", cache)
                 .put("armor.authentication.authentication_backend.cache.enable", cache);
     }
 
