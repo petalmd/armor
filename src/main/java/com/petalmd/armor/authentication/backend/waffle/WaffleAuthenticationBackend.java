@@ -17,11 +17,11 @@
 
 package com.petalmd.armor.authentication.backend.waffle;
 
+import org.apache.lucene.util.Constants;
 import org.elasticsearch.ElasticsearchException;
 import org.elasticsearch.common.inject.Inject;
 import org.elasticsearch.common.logging.ESLogger;
 import org.elasticsearch.common.logging.Loggers;
-import org.elasticsearch.common.os.OsUtils;
 import org.elasticsearch.common.settings.Settings;
 
 import waffle.windows.auth.IWindowsAuthProvider;
@@ -48,7 +48,7 @@ public class WaffleAuthenticationBackend implements AuthenticationBackend {
         this.authProvider = authProvider;
         stripDomain = settings.getAsBoolean(ConfigConstants.ARMOR_AUTHENTICATION_WAFFLE_STRIP_DOMAIN, true);
 
-        if (!OsUtils.WINDOWS) {
+        if (!Constants.WINDOWS) {
             throw new ElasticsearchException("Waffle works only on Windows operating system, not on " + System.getProperty("os.name"));
         }
 

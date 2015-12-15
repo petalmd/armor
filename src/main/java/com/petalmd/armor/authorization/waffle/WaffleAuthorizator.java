@@ -24,7 +24,7 @@ import org.elasticsearch.ElasticsearchException;
 import org.elasticsearch.common.inject.Inject;
 import org.elasticsearch.common.logging.ESLogger;
 import org.elasticsearch.common.logging.Loggers;
-import org.elasticsearch.common.os.OsUtils;
+import org.apache.lucene.util.Constants;
 import org.elasticsearch.common.settings.Settings;
 
 import waffle.windows.auth.IWindowsAccount;
@@ -45,7 +45,7 @@ public class WaffleAuthorizator implements NonCachingAuthorizator {
 
         this.settings = settings;
 
-        if (!OsUtils.WINDOWS) {
+        if (!Constants.WINDOWS) {
             throw new ElasticsearchException("Waffle works only on Windows operating system, not on " + System.getProperty("os.name"));
         }
 

@@ -3,25 +3,7 @@
     "post_date": "2014-11-15T14:12:12",
     "message": "playing with security",
     "structure": {
-        "thearray": [
-            "1",
-            2,
-            true,
-            false,
-            null,
-            {},
-            [
-                "somestring",
-                9,
-                8,
-                {},
-                [],
-                [
-                    4,
-                    5
-                ]
-            ]
-        ],
+        "thearray": [1,2,3,4,5],
         "thesubobject": {
             "sokey1": "sovalue1",
             "sokey2": "sovalue2",

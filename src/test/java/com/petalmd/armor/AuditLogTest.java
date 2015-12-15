@@ -2,7 +2,6 @@ package com.petalmd.armor;
 
 import io.searchbox.client.JestResult;
 
-import org.elasticsearch.common.settings.ImmutableSettings;
 import org.elasticsearch.common.settings.Settings;
 import org.junit.Test;
 
@@ -16,7 +15,7 @@ public class AuditLogTest extends AbstractScenarioTest {
         username = "jacksonm";
         password = "secret";
 
-        final Settings settings = ImmutableSettings.settingsBuilder().putArray("armor.actionrequestfilter.names", "readonly")
+        final Settings settings = Settings.settingsBuilder().putArray("armor.actionrequestfilter.names", "readonly")
                 .putArray("armor.actionrequestfilter.readonly.allowed_actions", "indices:data/read/search")
                 .put(getAuthSettings(false, "ceo")).build();
 

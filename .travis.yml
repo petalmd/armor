@@ -1,9 +1,7 @@
 language: java
 
 jdk:
-  - openjdk7
-  - oraclejdk7
-  - oraclejdk8 
+  - oraclejdk8
 
 after_success:
   - mvn clean cobertura:cobertura coveralls:report
@@ -13,6 +11,9 @@ env:
    # The next declaration is the encrypted COVERITY_SCAN_TOKEN, created
    #   via the "travis encrypt" command using the project repo's public key
    - secure: "tbXO5IfK5ba50q4nOmkXn9Skp7L2xw4FwdjVE2cBUCPjFjQHvLUEgOoqBI44hSwfWlOPN7tRUK/zNyg9v8d2GnMCwxxfAYg9R5nr8gW8ixxGtKi/0aDMn/CCMb1v2xAH0sRqeXCeObxS7LU/cMsM9qGotHrjY4y6Kq0Mw3tcl6E6C/Vv6URNvqSaMX5gInuYcDQBasix/1I3qpVpKLKNXkPaIn4sCq4Ry5tKC3MHuViJUHzfmEF1mxRUbED30b1qOh8AEY6sySkwkOgi4cT/ka24Fkn+c/YU9pauTKxX4S2lC+p19sjI7IhrejdU8LPArr32cVK9aCLea6JMwCcm3S7CVe6HklWEMWA0Hu4GHmaD3Ni6v1d7wCZTR+QyNcCyE2ZsHjnXlmO1NIQ+9+f/AJQ2OVdDMjbaO5dPofLNHRP8wxIt/CAQTJvciDOHQSirg+Vo9AWvUUUvEVcrwjlECrl2pC2zYSf7mmTpPQ0Gk20KIgPp6PRI3ryZy4uZ6vteb7t3tF/L43EKASEwUqvLTaUE+/MZT5lGqvlgnQR+5Sb1z+KYjzp6ugnDuPFhYpykIVq13H3K6VVRSRkRug9UjiYTf8INcJxPSm1MPc5BLnUrsru430KVwfxKcXBVaw2tI2U0s8GfjBvgRdAaobU4Tsyvnnz7MNq0w2mbnPHvweQ="
+
+before_install:
+  - hostname | sed 's/^/127.0.0.1 /g' | cat - /etc/hosts > /etc/hosts
 
 addons:
   coverity_scan:

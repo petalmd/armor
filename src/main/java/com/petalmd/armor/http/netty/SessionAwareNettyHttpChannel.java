@@ -19,9 +19,9 @@ package com.petalmd.armor.http.netty;
 
 import org.elasticsearch.common.logging.ESLogger;
 import org.elasticsearch.common.logging.Loggers;
-import org.elasticsearch.common.netty.handler.codec.http.Cookie;
-import org.elasticsearch.common.netty.handler.codec.http.CookieEncoder;
-import org.elasticsearch.common.netty.handler.codec.http.DefaultCookie;
+import org.jboss.netty.handler.codec.http.Cookie;
+import org.jboss.netty.handler.codec.http.CookieEncoder;
+import org.jboss.netty.handler.codec.http.DefaultCookie;
 import org.elasticsearch.http.netty.NettyHttpRequest;
 import org.elasticsearch.rest.RestChannel;
 import org.elasticsearch.rest.RestResponse;

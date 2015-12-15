@@ -16,7 +16,7 @@
 
     <groupId>com.petalmd</groupId>
     <artifactId>armor</artifactId>
-    <version>1.7.1-SNAPSHOT</version>
+    <version>2.0.0-SNAPSHOT</version>
     <packaging>jar</packaging>
 
     <name>A.R.M.O.R</name>
@@ -44,12 +44,12 @@
     </licenses>
 
     <properties>
-        <elasticsearch.version>1.7.3</elasticsearch.version>
+        <elasticsearch.version>2.0.0</elasticsearch.version>
         <apache.ds.version>2.0.0-M17</apache.ds.version>
         <apache.ds.api.version>1.0.0-M28</apache.ds.api.version>
         <path.delim>\\</path.delim>
         <dependency.locations.enabled>false</dependency.locations.enabled>
-        <lucene.maven.version>4.10.4</lucene.maven.version>
+        <lucene.maven.version>5.2.1</lucene.maven.version>
     </properties>
 
     <scm>
@@ -169,7 +169,7 @@
         <dependency>
             <groupId>io.searchbox</groupId>
             <artifactId>jest</artifactId>
-            <version>0.1.4</version>
+            <version>2.0.0</version>
             <scope>test</scope>
         </dependency>
 
@@ -288,7 +288,7 @@
                         <configuration>
                             <rules>
                                 <requireJavaVersion>
-                                    <version>1.7</version>
+                                    <version>1.8</version>
                                 </requireJavaVersion>
                             </rules>
                         </configuration>
@@ -332,6 +332,7 @@
                 <artifactId>maven-surefire-plugin</artifactId>
                 <version>2.19</version>
                 <configuration>
+                    <runOrder>alphabetical</runOrder>
                     <includes>
                         <include>**/*Test*.java</include>
                     </includes>

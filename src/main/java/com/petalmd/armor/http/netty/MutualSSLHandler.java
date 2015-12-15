@@ -20,13 +20,13 @@ package com.petalmd.armor.http.netty;
 import java.net.SocketAddress;
 import java.security.Principal;
 
-import org.elasticsearch.common.netty.channel.Channel;
-import org.elasticsearch.common.netty.channel.ChannelFuture;
-import org.elasticsearch.common.netty.channel.ChannelHandlerContext;
-import org.elasticsearch.common.netty.channel.MessageEvent;
-import org.elasticsearch.common.netty.channel.SimpleChannelHandler;
-import org.elasticsearch.common.netty.handler.codec.http.DefaultHttpRequest;
-import org.elasticsearch.common.netty.handler.ssl.SslHandler;
+import org.jboss.netty.channel.Channel;
+import org.jboss.netty.channel.ChannelFuture;
+import org.jboss.netty.channel.ChannelHandlerContext;
+import org.jboss.netty.channel.MessageEvent;
+import org.jboss.netty.channel.SimpleChannelHandler;
+import org.jboss.netty.handler.codec.http.DefaultHttpRequest;
+import org.jboss.netty.handler.ssl.SslHandler;
 
 public class MutualSSLHandler extends SimpleChannelHandler {
 

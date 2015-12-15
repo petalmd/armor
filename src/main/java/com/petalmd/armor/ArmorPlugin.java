@@ -17,6 +17,7 @@
 
 package com.petalmd.armor;
 
+import java.util.ArrayList;
 import java.util.Collection;
 
 import com.petalmd.armor.transport.ArmorNettyTransport;
@@ -28,15 +29,15 @@ import javassist.CtNewMethod;
 
 import org.elasticsearch.ElasticsearchException;
 import org.elasticsearch.action.ActionModule;
-import org.elasticsearch.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableList;
 import org.elasticsearch.common.component.LifecycleComponent;
 import org.elasticsearch.common.inject.Module;
-import org.elasticsearch.common.lang3.StringUtils;
+import org.apache.commons.lang.StringUtils;
 import org.elasticsearch.common.logging.ESLogger;
 import org.elasticsearch.common.logging.Loggers;
-import org.elasticsearch.common.settings.ImmutableSettings;
 import org.elasticsearch.common.settings.Settings;
-import org.elasticsearch.plugins.AbstractPlugin;
+import org.elasticsearch.http.HttpServerModule;
+import org.elasticsearch.plugins.Plugin;
 import org.elasticsearch.rest.RestModule;
 
 import com.petalmd.armor.filter.DLSActionFilter;
@@ -50,19 +51,15 @@ import com.petalmd.armor.service.ArmorService;
 import com.petalmd.armor.transport.SSLClientNettyTransport;
 import com.petalmd.armor.transport.SSLNettyTransport;
 import com.petalmd.armor.util.ConfigConstants;
+import org.elasticsearch.transport.Transport;
+import org.elasticsearch.transport.TransportModule;
 
 //TODO FUTURE store users/roles also in elasticsearch search guard index
 //TODO FUTURE Multi authenticator/authorizator
 //TODO FUTURE special handling scroll searches
 //TODO FUTURE negative rules/users in acrules
 //TODO update some settings during runtime
-public final class ArmorPlugin extends AbstractPlugin {
-
-    @Override
-    public void processModule(final Module module) {
-        super.processModule(module);
-    }
-
+public final class ArmorPlugin extends Plugin {
     private static final String ARMOR_DEBUG = "armor.debug";
     private static final String CLIENT_TYPE = "client.type";
     private static final String HTTP_TYPE = "http.type";
@@ -77,7 +74,6 @@ public final class ArmorPlugin extends AbstractPlugin {
 
     //TODO make non static and check "enabled"
     static {
-
         if (Boolean.parseBoolean(System.getProperty(ArmorPlugin.ARMOR_DEBUG, "false"))) {
             System.setProperty("javax.net.debug", "all");
             System.setProperty("sun.security.krb5.debug", "true");
@@ -98,7 +94,7 @@ public final class ArmorPlugin extends AbstractPlugin {
             cc.addMethod(m);
 
             final CtMethod me = cc.getDeclaredMethod("createContext");
-            me.insertAt(574, "if(callback != null) {callback.onCreateContext(context, request);}");
+            me.insertAt(665, "if(callback != null) {callback.onCreateContext(context, request);}");
 
             cc.toClass();
             log.info("Class enhancements for DLS/FLS successful");
@@ -111,20 +107,33 @@ public final class ArmorPlugin extends AbstractPlugin {
     }
 
     public ArmorPlugin(final Settings settings) {
-
         this.settings = settings;
         enabled = this.settings.getAsBoolean(ConfigConstants.ARMOR_ENABLED, true);
         client = !"node".equals(this.settings.get(ArmorPlugin.CLIENT_TYPE, "node"));
     }
 
-    public void onModule(final RestModule module) {
+    public void onModule(RestModule module) {
         if (enabled && !client) {
             module.addRestAction(ArmorInfoAction.class);
         }
 
     }
 
-    public void onModule(final ActionModule module) {
+    public void onModule(TransportModule transportModule) {
+        if (settings.getAsBoolean(ConfigConstants.ARMOR_SSL_TRANSPORT_NODE_ENABLED, false)) {
+            transportModule.setTransport(client ? SSLClientNettyTransport.class : SSLNettyTransport.class, this.name());
+        } else {
+            transportModule.setTransport(ArmorNettyTransport.class, this.name());
+        }
+    }
+
+    public void onModule(HttpServerModule httpServerModue) {
+        if (settings.getAsBoolean(ConfigConstants.ARMOR_SSL_TRANSPORT_HTTP_ENABLED, false)) {
+            httpServerModue.setHttpServerTransport(SSLNettyHttpServerTransport.class, this.name());
+        }
+    }
+
+    public void onModule(ActionModule module) {
         if (enabled && !client) {
             module.registerFilter(ArmorActionFilter.class);
             module.registerFilter(RequestActionFilter.class);
@@ -135,8 +144,7 @@ public final class ArmorPlugin extends AbstractPlugin {
 
     @SuppressWarnings("rawtypes")
     @Override
-    public Collection<Class<? extends LifecycleComponent>> services() {
-
+    public Collection<Class<? extends LifecycleComponent>> nodeServices() {
         if (enabled && !client) {
             return ImmutableList.<Class<? extends LifecycleComponent>> of(ArmorService.class, ArmorConfigService.class);
         }
@@ -145,9 +153,11 @@ public final class ArmorPlugin extends AbstractPlugin {
 
     @SuppressWarnings("rawtypes")
     @Override
-    public Collection<Class<? extends Module>> modules() {
+    public Collection<Module> nodeModules() {
         if (enabled && !client) {
-            return ImmutableList.<Class<? extends Module>> of(AuthModule.class);
+            Collection<Module> modules = new ArrayList<>();
+            modules.add(new AuthModule(settings));
+            return modules;
         }
         return ImmutableList.of();
     }
@@ -156,7 +166,7 @@ public final class ArmorPlugin extends AbstractPlugin {
     public Settings additionalSettings() {
         if (enabled) {
             checkSSLConfig();
-            final org.elasticsearch.common.settings.ImmutableSettings.Builder builder = ImmutableSettings.settingsBuilder();
+            final Settings.Builder builder = Settings.settingsBuilder();
             if (settings.getAsBoolean(ConfigConstants.ARMOR_SSL_TRANSPORT_NODE_ENABLED, false)) {
                 builder.put(ArmorPlugin.TRANSPORT_TYPE, client ? SSLClientNettyTransport.class : SSLNettyTransport.class);
             } else if (!client) {
@@ -164,10 +174,6 @@ public final class ArmorPlugin extends AbstractPlugin {
             }
 
             if (!client) {
-                if (settings.getAsBoolean(ConfigConstants.ARMOR_SSL_TRANSPORT_HTTP_ENABLED, false)) {
-                    builder.put(ArmorPlugin.HTTP_TYPE, SSLNettyHttpServerTransport.class);
-                }
-
                 if (settings.getAsBoolean(ArmorPlugin.BULK_UDP_ENABLED, false)) {
                     log.error("UDP Bulk service enabled, will disable it because its unsafe and deprecated");
                 }
@@ -177,7 +183,7 @@ public final class ArmorPlugin extends AbstractPlugin {
 
             return builder.build();
         } else {
-            return ImmutableSettings.Builder.EMPTY_SETTINGS;
+            return Settings.Builder.EMPTY_SETTINGS;
         }
     }
 
@@ -210,12 +216,12 @@ public final class ArmorPlugin extends AbstractPlugin {
 
     @Override
     public String description() {
-        return "Search Guard" + (enabled ? "" : " (disabled)");
+        return "Armor" + (enabled ? "" : " (disabled)");
     }
 
     @Override
     public String name() {
-        return "armor" + (enabled ? "" : " (disabled)");
+        return "Armor" + (enabled ? "" : " (disabled)");
     }
 
 }

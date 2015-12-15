@@ -17,9 +17,14 @@
 
 package com.petalmd.armor;
 
+import com.petalmd.armor.http.netty.SSLNettyHttpServerTransport;
+import org.elasticsearch.common.Classes;
 import org.elasticsearch.common.inject.AbstractModule;
 import org.elasticsearch.common.settings.Settings;
 
+import org.elasticsearch.http.HttpServerModule;
+import org.elasticsearch.http.HttpServerTransport;
+import org.elasticsearch.http.netty.NettyHttpServerTransport;
 import waffle.windows.auth.IWindowsAuthProvider;
 import waffle.windows.auth.impl.WindowsAuthProviderImpl;
 
@@ -53,52 +58,71 @@ public final class AuthModule extends AbstractModule {
 
     @Override
     protected void configure() {
+        try {
+            String impl;
 
-        final Class<? extends NonCachingAuthenticationBackend> defaultNonCachingAuthenticationBackend = SettingsBasedAuthenticationBackend.class;
-        final Class<? extends HTTPAuthenticator> defaultHTTPAuthenticator = HTTPBasicAuthenticator.class;
-        final Class<? extends NonCachingAuthorizator> defaultNonCachingAuthorizator = SettingsBasedAuthorizator.class;
+            final Class<? extends NonCachingAuthenticationBackend> defaultNonCachingAuthenticationBackend = SettingsBasedAuthenticationBackend.class;
+            final Class<? extends HTTPAuthenticator> defaultHTTPAuthenticator = HTTPBasicAuthenticator.class;
+            final Class<? extends NonCachingAuthorizator> defaultNonCachingAuthorizator = SettingsBasedAuthorizator.class;
 
-        final Class<? extends NonCachingAuthenticationBackend> authenticationBackend = settings.getAsClass(
-                ConfigConstants.ARMOR_AUTHENTICATION_AUTHENTICATION_BACKEND, defaultNonCachingAuthenticationBackend);
+            impl = settings.get(ConfigConstants.ARMOR_AUTHENTICATION_AUTHENTICATION_BACKEND);
+            Class<? extends NonCachingAuthenticationBackend> authenticationBackend = defaultNonCachingAuthenticationBackend;
+            if (impl != null) {
+                authenticationBackend = (Class<? extends NonCachingAuthenticationBackend>) Class.forName(impl);
+            }
 
-        final Class<? extends HTTPAuthenticator> httpAuthenticator = settings.getAsClass(
-                ConfigConstants.ARMOR_AUTHENTICATION_HTTP_AUTHENTICATOR, defaultHTTPAuthenticator);
-        bind(HTTPAuthenticator.class).to(httpAuthenticator).asEagerSingleton();
+            impl = settings.get(ConfigConstants.ARMOR_AUTHENTICATION_HTTP_AUTHENTICATOR);
+            Class<? extends HTTPAuthenticator> httpAuthenticator = defaultHTTPAuthenticator;
+            if (impl != null) {
+                httpAuthenticator = (Class<? extends HTTPAuthenticator>) Class.forName(impl);
+            }
 
-        final Class<? extends NonCachingAuthorizator> authorizator = settings.getAsClass(
-                ConfigConstants.ARMOR_AUTHENTICATION_AUTHORIZER, defaultNonCachingAuthorizator);
+            bind(HTTPAuthenticator.class).to(httpAuthenticator).asEagerSingleton();
 
-        if (settings.getAsBoolean(ConfigConstants.ARMOR_AUTHENTICATION_AUTHENTICATION_BACKEND_CACHE_ENABLE, true)) {
-            bind(NonCachingAuthenticationBackend.class).to(authenticationBackend).asEagerSingleton();
-            bind(AuthenticationBackend.class).to(GuavaCachingAuthenticationBackend.class).asEagerSingleton();
-        } else {
-            bind(AuthenticationBackend.class).to(authenticationBackend).asEagerSingleton();
+            impl = settings.get(ConfigConstants.ARMOR_AUTHENTICATION_AUTHORIZER);
+            Class<? extends NonCachingAuthorizator> authorizator = defaultNonCachingAuthorizator;
+            if (impl != null) {
+                authorizator = (Class<? extends NonCachingAuthorizator>) Class.forName(impl);
+            }
+
+            if (settings.getAsBoolean(ConfigConstants.ARMOR_AUTHENTICATION_AUTHENTICATION_BACKEND_CACHE_ENABLE, true)) {
+                bind(NonCachingAuthenticationBackend.class).to(authenticationBackend).asEagerSingleton();
+                bind(AuthenticationBackend.class).to(GuavaCachingAuthenticationBackend.class).asEagerSingleton();
+            } else {
+                bind(AuthenticationBackend.class).to(authenticationBackend).asEagerSingleton();
+            }
+
+            if (settings.getAsBoolean(ConfigConstants.ARMOR_AUTHENTICATION_AUTHORIZER_CACHE_ENABLE, true)) {
+                bind(NonCachingAuthorizator.class).to(authorizator).asEagerSingleton();
+                bind(Authorizator.class).to(GuavaCachingAuthorizator.class).asEagerSingleton();
+            } else {
+                bind(Authorizator.class).to(authorizator).asEagerSingleton();
+            }
+
+            if (settings.getAsBoolean(ConfigConstants.ARMOR_HTTP_ENABLE_SESSIONS, false)) {
+                bind(SessionStore.class).to(DefaultSessionStore.class).asEagerSingleton();
+            } else {
+                bind(SessionStore.class).to(NullSessionStore.class).asEagerSingleton();
+            }
+
+            impl = settings.get(ConfigConstants.ARMOR_WAFFLE_WINDOWS_AUTH_PROVIDER_IMPL);
+            Class<? extends IWindowsAuthProvider> windowsAuthProviderImpl = WindowsAuthProviderImpl.class;
+            if (impl != null) {
+                windowsAuthProviderImpl = (Class<? extends IWindowsAuthProvider>) Class.forName(impl);
+            }
+
+            bind(IWindowsAuthProvider.class).to(windowsAuthProviderImpl).asEagerSingleton();
+
+            bind(AuditListener.class).to(
+                    settings.getAsBoolean(ConfigConstants.ARMOR_AUDITLOG_ENABLED, true) ? ESStoreAuditListener.class
+                            : NullStoreAuditListener.class).asEagerSingleton();
+
+            bind(ArmorService.class).asEagerSingleton();
+
+            bind(ArmorConfigService.class).asEagerSingleton();
+        }catch(Throwable t) {
+            t.toString();
         }
-
-        if (settings.getAsBoolean(ConfigConstants.ARMOR_AUTHENTICATION_AUTHORIZER_CACHE_ENABLE, true)) {
-            bind(NonCachingAuthorizator.class).to(authorizator).asEagerSingleton();
-            bind(Authorizator.class).to(GuavaCachingAuthorizator.class).asEagerSingleton();
-        } else {
-            bind(Authorizator.class).to(authorizator).asEagerSingleton();
-        }
-
-        if (settings.getAsBoolean(ConfigConstants.ARMOR_HTTP_ENABLE_SESSIONS, false)) {
-            bind(SessionStore.class).to(DefaultSessionStore.class).asEagerSingleton();
-        } else {
-            bind(SessionStore.class).to(NullSessionStore.class).asEagerSingleton();
-        }
-
-        bind(IWindowsAuthProvider.class).to(
-                settings.getAsClass(ConfigConstants.ARMOR_WAFFLE_WINDOWS_AUTH_PROVIDER_IMPL, WindowsAuthProviderImpl.class))
-                .asEagerSingleton();
-
-        bind(AuditListener.class).to(
-                settings.getAsBoolean(ConfigConstants.ARMOR_AUDITLOG_ENABLED, true) ? ESStoreAuditListener.class
-                        : NullStoreAuditListener.class).asEagerSingleton();
-
-        bind(ArmorService.class).asEagerSingleton();
-
-        bind(ArmorConfigService.class).asEagerSingleton();
     }
 
 }
