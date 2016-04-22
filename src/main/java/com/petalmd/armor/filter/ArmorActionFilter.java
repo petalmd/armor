@@ -130,8 +130,9 @@ public class ArmorActionFilter implements ActionFilter {
 
     private void apply0(final String action, final ActionRequest request, final ActionListener listener, final ActionFilterChain chain)
             throws Exception {
-
-        if (settings.getAsBoolean(ConfigConstants.ARMOR_ALLOW_CLUSTER_MONITOR, true) && action.startsWith("cluster:monitor/")) {
+    	//proceeding the chaing for kibana field stats request
+        if (action.startsWith("cluster:monitor/") || 
+        		action.contains("indices:data/read/field_stats")) {
             chain.proceed(action, request, listener);
             return;
         }
