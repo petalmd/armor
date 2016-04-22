@@ -120,17 +120,22 @@ public final class ArmorPlugin extends Plugin {
     }
 
     public void onModule(TransportModule transportModule) {
-        if (settings.getAsBoolean(ConfigConstants.ARMOR_SSL_TRANSPORT_NODE_ENABLED, false)) {
-            transportModule.setTransport(client ? SSLClientNettyTransport.class : SSLNettyTransport.class, this.name());
-        } else {
-            transportModule.setTransport(ArmorNettyTransport.class, this.name());
-        }
+    	//Inject transport module only if Armor plugin is enabled
+    	if(enabled && !client){
+    		if (settings.getAsBoolean(ConfigConstants.ARMOR_SSL_TRANSPORT_NODE_ENABLED, false)) {
+    			transportModule.setTransport(client ? SSLClientNettyTransport.class : SSLNettyTransport.class, this.name());
+    		} else {
+    			transportModule.setTransport(ArmorNettyTransport.class, this.name());
+    			}
+    	}
     }
 
     public void onModule(HttpServerModule httpServerModue) {
-        if (settings.getAsBoolean(ConfigConstants.ARMOR_SSL_TRANSPORT_HTTP_ENABLED, false)) {
-            httpServerModue.setHttpServerTransport(SSLNettyHttpServerTransport.class, this.name());
-        }
+    	if(enabled && !client){
+    		if (settings.getAsBoolean(ConfigConstants.ARMOR_SSL_TRANSPORT_HTTP_ENABLED, false)) {
+    			httpServerModue.setHttpServerTransport(SSLNettyHttpServerTransport.class, this.name());
+    		}
+    	}
     }
 
     public void onModule(ActionModule module) {
