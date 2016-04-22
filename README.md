@@ -1,4 +1,4 @@
-# A.R.M.O.R Security Plugin for ES 1.7
+# A.R.M.O.R Security Plugin for ES 2.1
 Elasticsearch security for free.
 
 ARMOR is a free and open source plugin for Elasticsearch which provides security features.
