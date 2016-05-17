@@ -23,12 +23,10 @@ import org.apache.directory.api.ldap.model.entry.Attribute;
 import org.apache.directory.api.ldap.model.entry.Entry;
 import org.apache.directory.api.ldap.model.exception.LdapInvalidAttributeValueException;
 import org.apache.lucene.index.Term;
-import org.apache.lucene.queries.TermFilter;
 import org.apache.lucene.search.*;
 import org.elasticsearch.ElasticsearchException;
 import org.elasticsearch.common.logging.ESLogger;
 import org.elasticsearch.common.logging.Loggers;
-import org.elasticsearch.common.lucene.search.Queries;
 import org.elasticsearch.common.settings.Settings;
 import org.elasticsearch.index.query.ParsedQuery;
 import org.elasticsearch.search.fetch.source.FetchSourceContext;
@@ -174,11 +172,11 @@ public class ConfigurableSearchContextCallback implements SearchContextCallback 
                         case "term": {
 
                             final boolean negate = Boolean.parseBoolean(list.get(3));
-
+                            final Query boolQuery = new BooleanQuery.Builder().add(new TermQuery(new Term(list.get(1), list.get(2))),BooleanClause.Occur.FILTER).build();
                             if (negate) {
-                                qliste.add(org.elasticsearch.common.lucene.search.Queries.not(new QueryWrapperFilter(new TermQuery(new Term(list.get(1), list.get(2))))));
+                                qliste.add(org.elasticsearch.common.lucene.search.Queries.not(boolQuery));
                             } else {
-                                qliste.add(new QueryWrapperFilter(new TermQuery(new Term(list.get(1), list.get(2)))));
+                                qliste.add(boolQuery);
                             }
 
                         }
@@ -193,11 +191,12 @@ public class ConfigurableSearchContextCallback implements SearchContextCallback 
                             final String field = list.get(1);
                             final boolean negate = Boolean.parseBoolean(list.get(2));
                             final String username = user.getName();
+                            final Query boolQuery = new BooleanQuery.Builder().add(new TermQuery(new Term(field, username)),BooleanClause.Occur.FILTER).build();
 
                             if (negate) {
-                                qliste.add(org.elasticsearch.common.lucene.search.Queries.not(new QueryWrapperFilter(new TermQuery(new Term(field, username)))));
+                                qliste.add(org.elasticsearch.common.lucene.search.Queries.not(boolQuery));
                             } else {
-                                qliste.add(new QueryWrapperFilter(new TermQuery(new Term(field, username))));
+                                qliste.add(boolQuery);
                             }
 
                         }
@@ -215,26 +214,25 @@ public class ConfigurableSearchContextCallback implements SearchContextCallback 
                             final List<Query> inner = new ArrayList<Query>();
                             for (final Iterator iterator = user.getRoles().iterator(); iterator.hasNext();) {
                                 final String role = (String) iterator.next();
+                                final Query boolQuery = new BooleanQuery.Builder().add(new TermQuery(new Term(field, role)),BooleanClause.Occur.FILTER).build();
 
                                 if (negate) {
-                                    inner.add(Queries.not(
-                                            (new QueryWrapperFilter(new TermQuery(new Term(field, role)))).getQuery()
-                                    ));
+                                    inner.add(org.elasticsearch.common.lucene.search.Queries.not(boolQuery));
                                 } else {
-                                    inner.add(new QueryWrapperFilter(new TermQuery(new Term(field, role))));
+                                    inner.add(boolQuery);
                                 }
 
                             }
 
-                            BooleanQuery boolQuery = new BooleanQuery();
+                            BooleanQuery.Builder boolQueryBuilder = new BooleanQuery.Builder();
                             for (Query innerFilter : inner) {
                                 if (negate) {
-                                    boolQuery.add(innerFilter, BooleanClause.Occur.MUST);
+                                    boolQueryBuilder.add(innerFilter, BooleanClause.Occur.FILTER);
                                 } else {
-                                    boolQuery.add(innerFilter, BooleanClause.Occur.SHOULD);
+                                    boolQueryBuilder.add(innerFilter, BooleanClause.Occur.SHOULD);
                                 }
                             }
-                            qliste.add(new QueryWrapperFilter(boolQuery));
+                            qliste.add(boolQueryBuilder.build());
                         }
                             ;
                             break;
@@ -260,15 +258,16 @@ public class ConfigurableSearchContextCallback implements SearchContextCallback 
                             }
 
                             try {
-                                if (negate) {
-                                    qliste.add(org.elasticsearch.common.lucene.search.Queries.not(new TermFilter(new Term(field, attr.getString()))));
+                                final BooleanQuery boolQuery = new BooleanQuery.Builder().add(new TermQuery(new Term(field, attr.getString())),BooleanClause.Occur.FILTER).build();
+                                if(negate) {
+                                    qliste.add(org.elasticsearch.common.lucene.search.Queries.not(boolQuery));
                                 } else {
-                                    qliste.add(new QueryWrapperFilter(new TermQuery(new Term(field, attr.getString()))));
+                                    qliste.add(boolQuery);
                                 }
                             } catch (final LdapInvalidAttributeValueException e) {
-                                //no-op
+                                throw new RuntimeException("Error in ldap user attribute", e);
                             }
-
+                         
                         }
                             ;
                             break;
@@ -298,44 +297,52 @@ public class ConfigurableSearchContextCallback implements SearchContextCallback 
                                             new Term(field, roleEntry.get(attribute).getString())
                                         )
                                     );
+                                    final BooleanQuery boolQuery = new BooleanQuery.Builder().add(new TermQuery(new Term(field, roleEntry.get(attribute).getString())),BooleanClause.Occur.FILTER).build();
                                     if (negate) {
-                                        inner.add(org.elasticsearch.common.lucene.search.Queries.not(new QueryWrapperFilter(new TermQuery((new Term(field, roleEntry.get(attribute).getString()))))));
+                                        inner.add(org.elasticsearch.common.lucene.search.Queries.not(boolQuery));
                                     } else {
-                                        inner.add(new QueryWrapperFilter(new TermQuery(new Term(field, roleEntry.get(attribute).getString()))));
+                                        inner.add(boolQuery);
                                     }
                                 } catch (final LdapInvalidAttributeValueException e) {
-                                    //no-op
+                                       throw new RuntimeException("Error in ldap user attribute", e);
                                 }
 
                             }
 
-                            BooleanQuery boolQuery = new BooleanQuery();
+                            BooleanQuery.Builder boolQueryBuilder = new BooleanQuery.Builder();
                             for (Query innerFilter : inner) {
                                 if (negate) {
-                                   boolQuery.add(innerFilter, BooleanClause.Occur.MUST);
+                                   boolQueryBuilder.add(innerFilter, BooleanClause.Occur.FILTER);
                                 } else {
-                                    boolQuery.add(innerFilter, BooleanClause.Occur.SHOULD);
+                                    boolQueryBuilder.add(innerFilter, BooleanClause.Occur.SHOULD);
                                 }
                             }
-                            qliste.add(new QueryWrapperFilter(boolQuery));
+                            qliste.add(boolQueryBuilder.build());
                         }
                             ;
                             break;
                         case "exists": {
-                            qliste.add(new FieldValueFilter(list.get(1), Boolean.parseBoolean(list.get(2))));
+                            final boolean negate =  Boolean.parseBoolean(list.get(2));
+                            final BooleanQuery boolQuery = new BooleanQuery.Builder().add(new FieldValueQuery(list.get(1)),BooleanClause.Occur.FILTER).build();
+                            
+                            if (negate) {
+                                qliste.add(org.elasticsearch.common.lucene.search.Queries.not(boolQuery));
+                            } else {
+                                qliste.add(boolQuery);
+                            }
                         }
                             ;
                             break;
                     }
 
-                    BooleanQuery boolQuery = new BooleanQuery();
+                    BooleanQuery.Builder boolQuery = new BooleanQuery.Builder();
                     for (Query innerFilter : qliste) {
-                        boolQuery.add(innerFilter, BooleanClause.Occur.MUST);
+                        boolQuery.add(innerFilter, BooleanClause.Occur.FILTER);
 
                         if (origfilter == null) {
-                            context.parsedPostFilter(new ParsedQuery(boolQuery));
+                            context.parsedPostFilter(new ParsedQuery(boolQuery.build()));
                         } else {
-                            context.parsedPostFilter(new ParsedQuery(boolQuery, origfilter.namedFilters()));
+                            context.parsedPostFilter(new ParsedQuery(boolQuery.build(), origfilter.namedFilters()));
                         }
                     }
                 }

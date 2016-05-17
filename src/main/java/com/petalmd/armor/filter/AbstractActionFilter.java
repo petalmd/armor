@@ -53,6 +53,7 @@ import com.petalmd.armor.authorization.Authorizator;
 import com.petalmd.armor.service.ArmorService;
 import com.petalmd.armor.util.ConfigConstants;
 import com.petalmd.armor.util.SecurityUtil;
+import org.elasticsearch.tasks.Task;
 
 public abstract class AbstractActionFilter implements ActionFilter {
 
@@ -77,14 +78,14 @@ public abstract class AbstractActionFilter implements ActionFilter {
     }
 
     @Override
-    public final void apply(final String action, final ActionRequest request, final ActionListener listener, final ActionFilterChain chain) {
+    public final void apply(Task task, final String action, final ActionRequest request, final ActionListener listener, final ActionFilterChain chain) {
         log.debug("REQUEST on node {}: {} ({}) from {}", clusterService.localNode().getName(), action, request.getClass(),
                 request.remoteAddress() == null ? "INTRANODE" : request.remoteAddress().toString());
         log.debug("Context {}", request.getContext());
         log.debug("Headers {}", request.getHeaders());
 
         if (action.startsWith("cluster:monitor/")) {
-            chain.proceed(action, request, listener);
+            chain.proceed(task, action, request, listener);
             return;
         }
 
@@ -94,7 +95,7 @@ public abstract class AbstractActionFilter implements ActionFilter {
 
         if (restAuthenticated) {
             log.debug("TYPE: rest authenticated request, apply filters");
-            applySecure(action, request, listener, chain);
+            applySecure(task, action, request, listener, chain);
             return;
         }
 
@@ -102,7 +103,7 @@ public abstract class AbstractActionFilter implements ActionFilter {
 
         if (intraNodeRequest) {
             log.debug("TYPE: intra node request, skip filters");
-            chain.proceed(action, request, listener);
+            chain.proceed(task, action, request, listener);
             return;
         }
 
@@ -120,7 +121,7 @@ public abstract class AbstractActionFilter implements ActionFilter {
 
         if (interNodeAuthenticated) {
             log.debug("TYPE: inter node cluster request, skip filters");
-            chain.proceed(action, request, listener);
+            chain.proceed(task, action, request, listener);
             return;
         }
 
@@ -151,14 +152,14 @@ public abstract class AbstractActionFilter implements ActionFilter {
 
         if (transportAuthenticated) {
             log.debug("TYPE: transport authenticated request, apply filters");
-            applySecure(action, request, listener, chain);
+            applySecure(task, action, request, listener, chain);
             return;
         }
 
         throw new RuntimeException("Unauthenticated request (SEARCHGUARD_UNAUTH_REQ) for action " + action);
     }
 
-    public abstract void applySecure(final String action, final ActionRequest request, final ActionListener listener,
+    public abstract void applySecure(Task task, final String action, final ActionRequest request, final ActionListener listener,
             final ActionFilterChain chain);
 
     @Override
