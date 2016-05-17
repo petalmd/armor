@@ -51,7 +51,6 @@ import com.petalmd.armor.service.ArmorService;
 import com.petalmd.armor.transport.SSLClientNettyTransport;
 import com.petalmd.armor.transport.SSLNettyTransport;
 import com.petalmd.armor.util.ConfigConstants;
-import org.elasticsearch.transport.Transport;
 import org.elasticsearch.transport.TransportModule;
 
 //TODO FUTURE store users/roles also in elasticsearch search guard index
@@ -94,7 +93,7 @@ public final class ArmorPlugin extends Plugin {
             cc.addMethod(m);
 
             final CtMethod me = cc.getDeclaredMethod("createContext");
-            me.insertAt(665, "if(callback != null) {callback.onCreateContext(context, request);}");
+            me.insertAt(656, "if(callback != null) {callback.onCreateContext(context, request);}");
 
             cc.toClass();
             log.info("Class enhancements for DLS/FLS successful");
@@ -121,13 +120,15 @@ public final class ArmorPlugin extends Plugin {
 
     public void onModule(TransportModule transportModule) {
     	//Inject transport module only if Armor plugin is enabled
-    	if(enabled && !client){
-    		if (settings.getAsBoolean(ConfigConstants.ARMOR_SSL_TRANSPORT_NODE_ENABLED, false)) {
-    			transportModule.setTransport(client ? SSLClientNettyTransport.class : SSLNettyTransport.class, this.name());
-    		} else {
-    			transportModule.setTransport(ArmorNettyTransport.class, this.name());
-    			}
-    	}
+    	if (enabled) {
+            if (settings.getAsBoolean(ConfigConstants.ARMOR_SSL_TRANSPORT_NODE_ENABLED, false)) {
+                transportModule.setTransport(client ? com.petalmd.armor.transport.SSLClientNettyTransport.class : com.petalmd.armor.transport.SSLNettyTransport.class, this.name());
+            } else {
+               if (!client) {
+                transportModule.setTransport(ArmorNettyTransport.class, this.name());
+               }
+            }
+        }
     }
 
     public void onModule(HttpServerModule httpServerModue) {

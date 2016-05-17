@@ -40,6 +40,7 @@ import org.elasticsearch.common.settings.Settings;
 import com.petalmd.armor.authentication.backend.AuthenticationBackend;
 import com.petalmd.armor.authorization.Authorizator;
 import com.petalmd.armor.util.ConfigConstants;
+import org.elasticsearch.tasks.Task;
 
 public class DLSActionFilter extends AbstractActionFilter {
 
@@ -67,10 +68,10 @@ public class DLSActionFilter extends AbstractActionFilter {
     }
 
     @Override
-    public void applySecure(final String action, final ActionRequest request, final ActionListener listener, final ActionFilterChain chain) {
+    public void applySecure(Task task, final String action, final ActionRequest request, final ActionListener listener, final ActionFilterChain chain) {
 
         if (filterMap.size() == 0) {
-            chain.proceed(action, request, listener);
+            chain.proceed(task, action, request, listener);
             return;
         }
 
@@ -120,7 +121,8 @@ public class DLSActionFilter extends AbstractActionFilter {
             }
         }
 
-        chain.proceed(action, request, listener);
+        chain.proceed(task, action, request, listener);
     }
+
 
 }

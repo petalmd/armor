@@ -56,6 +56,7 @@ import com.petalmd.armor.tokeneval.TokenEvaluator.FilterAction;
 import com.petalmd.armor.util.ConfigConstants;
 import com.petalmd.armor.util.SecurityUtil;
 import org.elasticsearch.index.IndexNotFoundException;
+import org.elasticsearch.tasks.Task;
 
 
 public class ArmorActionFilter implements ActionFilter {
@@ -85,10 +86,10 @@ public class ArmorActionFilter implements ActionFilter {
     }
 
     @Override
-    public void apply(final String action, final ActionRequest request, final ActionListener listener, final ActionFilterChain chain) {
+    public void apply(Task task, final String action, final ActionRequest request, final ActionListener listener, final ActionFilterChain chain) {
 
         try {
-            apply0(action, request, listener, chain);
+            apply0(task, action, request, listener, chain);
         } catch (final ForbiddenException e) {
             log.error("Forbidden while apply() due to {} for action {}", e, e.toString(), action);
             throw e;
@@ -128,12 +129,12 @@ public class ArmorActionFilter implements ActionFilter {
         }
     }
 
-    private void apply0(final String action, final ActionRequest request, final ActionListener listener, final ActionFilterChain chain)
+    private void apply0(Task task,final String action, final ActionRequest request, final ActionListener listener, final ActionFilterChain chain)
             throws Exception {
     	//proceeding the chaing for kibana field stats request
         if (action.startsWith("cluster:monitor/") || 
         		action.contains("indices:data/read/field_stats")) {
-            chain.proceed(action, request, listener);
+            chain.proceed(task, action, request, listener);
             return;
         }
 
@@ -148,7 +149,7 @@ public class ArmorActionFilter implements ActionFilter {
         if (request.remoteAddress() == null && user == null) {
             log.trace("INTRANODE request");
             try {
-                chain.proceed(action, request, listener);
+                chain.proceed(task, action, request, listener);
             } catch(IndexNotFoundException e) {
                 log.warn("Missing internal Armor Index, access granted");
                 return;
@@ -172,7 +173,7 @@ public class ArmorActionFilter implements ActionFilter {
             }
 
             log.trace("Authenticated INTERNODE (cluster) message, pass through");
-            chain.proceed(action, request, listener);
+            chain.proceed(task, action, request, listener);
             return;
         }
 
@@ -312,7 +313,7 @@ public class ArmorActionFilter implements ActionFilter {
                     final String allowedAction = iterator.next();
                     if (SecurityUtil.isWildcardMatch(action, allowedAction, false)) {
                         log.trace("Action '{}' is allowed due to {}", action, allowedAction);
-                        chain.proceed(action, request, listener);
+                        chain.proceed(task, action, request, listener);
                         return;
                     }
                 }
@@ -361,7 +362,7 @@ public class ArmorActionFilter implements ActionFilter {
 
         }
 
-        chain.proceed(action, request, listener);
+        chain.proceed(task, action, request, listener);
 
     }
 

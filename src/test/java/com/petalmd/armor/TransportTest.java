@@ -104,7 +104,7 @@ public class TransportTest extends AbstractUnitTest {
 
         final Settings tsettings = Settings
                 .settingsBuilder()
-                .put("path.plugins", "data/plugins").put("plugin.types", ArmorPlugin.class.getName())
+                .put("path.plugins", "data/plugins")
                 .put("cluster.name", "armor_testcluster")
                 .put(ConfigConstants.ARMOR_SSL_TRANSPORT_NODE_ENABLED, true)
                 .put(ConfigConstants.ARMOR_SSL_TRANSPORT_NODE_KEYSTORE_FILEPATH,
@@ -115,6 +115,7 @@ public class TransportTest extends AbstractUnitTest {
                 .build();
 
         final Client tc = new TransportClient.Builder()
+                .addPlugin(ArmorPlugin.class)
                 .settings(tsettings)
                 .build()
                 .addTransportAddress(
