@@ -44,12 +44,12 @@
     </licenses>
 
     <properties>
-        <elasticsearch.version>2.3.2</elasticsearch.version>
+        <elasticsearch.version>2.3.3</elasticsearch.version>
         <apache.ds.version>2.0.0-M17</apache.ds.version>
         <apache.ds.api.version>1.0.0-M28</apache.ds.api.version>
         <path.delim>\\</path.delim>
         <dependency.locations.enabled>false</dependency.locations.enabled>
-        <lucene.maven.version>5.2.1</lucene.maven.version>
+        <lucene.maven.version>5.5.0</lucene.maven.version>
     </properties>
 
     <scm>
@@ -288,7 +288,7 @@
                         <configuration>
                             <rules>
                                 <requireJavaVersion>
-                                    <version>1.8</version>
+                                    <version>1.7</version>
                                 </requireJavaVersion>
                             </rules>
                         </configuration>
