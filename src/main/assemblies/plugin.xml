@@ -5,13 +5,19 @@
         <format>zip</format>
     </formats>
     <includeBaseDirectory>false</includeBaseDirectory>
-    <fileSets>
-        <fileSet>
-            <includes>
-                <include>plugin-descriptor.properties</include>
-            </includes>
-        </fileSet>
-    </fileSets>
+    <!-- plugin descriptor -->
+    <files>
+        <file>
+            <source>${basedir}/src/main/resources/plugin-metadata/plugin-descriptor.properties</source>
+            <outputDirectory></outputDirectory>
+            <filtered>true</filtered>
+        </file>
+        <file>
+            <source>${basedir}/src/main/resources/plugin-metadata/plugin-security.policy</source>
+            <outputDirectory></outputDirectory>
+            <filtered>true</filtered>
+        </file>
+   </files>
     <dependencySets>
         <dependencySet>
             <outputDirectory>/</outputDirectory>

@@ -34,6 +34,7 @@ import org.elasticsearch.common.logging.Loggers;
 import com.petalmd.armor.authentication.User;
 import com.petalmd.armor.util.SecurityUtil;
 import com.google.common.collect.Lists;
+import org.codehaus.jackson.annotate.JsonIgnore;
 
 public class TokenEvaluator {
 
@@ -46,6 +47,7 @@ public class TokenEvaluator {
         mapper.configure(DeserializationConfig.Feature.FAIL_ON_NULL_FOR_PRIMITIVES, true);
         mapper.configure(DeserializationConfig.Feature.FAIL_ON_NUMBERS_FOR_ENUMS, true);
         mapper.configure(DeserializationConfig.Feature.FAIL_ON_UNKNOWN_PROPERTIES, true);
+        mapper.configure(DeserializationConfig.Feature.CAN_OVERRIDE_ACCESS_MODIFIERS, false);
     }
 
     public enum FilterAction {
@@ -409,7 +411,7 @@ public class TokenEvaluator {
     }
 
     @SuppressWarnings(value = { "unused" })
-    private static class ACRules {
+    public static class ACRules {
 
         private List<ACRule> acl;
 
@@ -423,7 +425,7 @@ public class TokenEvaluator {
     }
 
     @SuppressWarnings(value = { "unused" })
-    private static class ACRule {
+    public static class ACRule {
 
         private String __Comment__;
         private Set<String> hosts;
@@ -434,6 +436,7 @@ public class TokenEvaluator {
         private Set<String> filters_execute;
         private Set<String> filters_bypass;
 
+        @JsonIgnore
         public boolean isDefault() {
 
             if (isNullEmtyStar(hosts) && isNullEmtyStar(users) && isNullEmtyStar(roles) && isNullEmtyStar(indices)
