@@ -14,18 +14,12 @@
  * limitations under the License.
  * 
  */
-
 package com.petalmd.armor;
 
 import java.util.ArrayList;
 import java.util.Collection;
 
 import com.petalmd.armor.transport.ArmorNettyTransport;
-import javassist.ClassPool;
-import javassist.CtClass;
-import javassist.CtField;
-import javassist.CtMethod;
-import javassist.CtNewMethod;
 
 import org.elasticsearch.ElasticsearchException;
 import org.elasticsearch.action.ActionModule;
@@ -44,6 +38,7 @@ import com.petalmd.armor.filter.DLSActionFilter;
 import com.petalmd.armor.filter.FLSActionFilter;
 import com.petalmd.armor.filter.RequestActionFilter;
 import com.petalmd.armor.filter.ArmorActionFilter;
+import com.petalmd.armor.filter.level.ArmorWrapperQueryParser;
 import com.petalmd.armor.http.netty.SSLNettyHttpServerTransport;
 import com.petalmd.armor.rest.ArmorInfoAction;
 import com.petalmd.armor.service.ArmorConfigService;
@@ -51,6 +46,7 @@ import com.petalmd.armor.service.ArmorService;
 import com.petalmd.armor.transport.SSLClientNettyTransport;
 import com.petalmd.armor.transport.SSLNettyTransport;
 import com.petalmd.armor.util.ConfigConstants;
+import org.elasticsearch.indices.IndicesModule;
 import org.elasticsearch.transport.TransportModule;
 
 //TODO FUTURE store users/roles also in elasticsearch search guard index
@@ -59,6 +55,7 @@ import org.elasticsearch.transport.TransportModule;
 //TODO FUTURE negative rules/users in acrules
 //TODO update some settings during runtime
 public final class ArmorPlugin extends Plugin {
+
     private static final String ARMOR_DEBUG = "armor.debug";
     private static final String CLIENT_TYPE = "client.type";
     private static final String HTTP_TYPE = "http.type";
@@ -69,40 +66,14 @@ public final class ArmorPlugin extends Plugin {
     private final boolean enabled;
     private final boolean client;
     private final Settings settings;
-    public static final boolean DLS_SUPPORTED;
-
-    //TODO make non static and check "enabled"
+    public static boolean DLS_SUPPORTED = true; //implemented as filters now
+    
     static {
         if (Boolean.parseBoolean(System.getProperty(ArmorPlugin.ARMOR_DEBUG, "false"))) {
             System.setProperty("javax.net.debug", "all");
             System.setProperty("sun.security.krb5.debug", "true");
             System.setProperty("java.security.debug", "all");
         }
-
-        boolean dlsSupported = false;
-
-        try {
-            final ClassPool pool = ClassPool.getDefault();
-            final CtClass cc = pool.get("org.elasticsearch.search.SearchService");
-            final CtField f = CtField.make("private com.petalmd.armor.filter.level.SearchContextCallback callback = null;", cc);
-            cc.addField(f);
-
-            final CtMethod m = CtNewMethod
-                    .make("public void setCallback(com.petalmd.armor.filter.level.SearchContextCallback callback){this.callback = callback;}",
-                            cc);
-            cc.addMethod(m);
-
-            final CtMethod me = cc.getDeclaredMethod("createContext");
-            me.insertAt(656, "if(callback != null) {callback.onCreateContext(context, request);}");
-
-            cc.toClass();
-            log.info("Class enhancements for DLS/FLS successful");
-            dlsSupported = true;
-        } catch (final Exception e) {
-            log.error("Class enhancements for DLS/FLS not successful due to {}", e, e.toString());
-        }
-
-        DLS_SUPPORTED = dlsSupported;
     }
 
     public ArmorPlugin(final Settings settings) {
@@ -115,28 +86,25 @@ public final class ArmorPlugin extends Plugin {
         if (enabled && !client) {
             module.addRestAction(ArmorInfoAction.class);
         }
-
     }
 
     public void onModule(TransportModule transportModule) {
-    	//Inject transport module only if Armor plugin is enabled
-    	if (enabled) {
+        //Inject transport module only if Armor plugin is enabled
+        if (enabled) {
             if (settings.getAsBoolean(ConfigConstants.ARMOR_SSL_TRANSPORT_NODE_ENABLED, false)) {
                 transportModule.setTransport(client ? com.petalmd.armor.transport.SSLClientNettyTransport.class : com.petalmd.armor.transport.SSLNettyTransport.class, this.name());
-            } else {
-               if (!client) {
+            } else if (!client) {
                 transportModule.setTransport(ArmorNettyTransport.class, this.name());
-               }
             }
         }
     }
 
     public void onModule(HttpServerModule httpServerModue) {
-    	if(enabled && !client){
-    		if (settings.getAsBoolean(ConfigConstants.ARMOR_SSL_TRANSPORT_HTTP_ENABLED, false)) {
-    			httpServerModue.setHttpServerTransport(SSLNettyHttpServerTransport.class, this.name());
-    		}
-    	}
+        if (enabled && !client) {
+            if (settings.getAsBoolean(ConfigConstants.ARMOR_SSL_TRANSPORT_HTTP_ENABLED, false)) {
+                httpServerModue.setHttpServerTransport(SSLNettyHttpServerTransport.class, this.name());
+            }
+        }
     }
 
     public void onModule(ActionModule module) {
@@ -148,11 +116,15 @@ public final class ArmorPlugin extends Plugin {
         }
     }
 
+    public void onModule(IndicesModule module) {
+        module.registerQueryParser(ArmorWrapperQueryParser.class);
+    }
+
     @SuppressWarnings("rawtypes")
     @Override
     public Collection<Class<? extends LifecycleComponent>> nodeServices() {
         if (enabled && !client) {
-            return ImmutableList.<Class<? extends LifecycleComponent>> of(ArmorService.class, ArmorConfigService.class);
+            return ImmutableList.<Class<? extends LifecycleComponent>>of(ArmorService.class, ArmorConfigService.class);
         }
         return ImmutableList.of();
     }

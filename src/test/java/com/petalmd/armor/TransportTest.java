@@ -1,14 +1,10 @@
 package com.petalmd.armor;
 
 import java.io.IOException;
-import java.io.NotSerializableException;
 import java.net.InetAddress;
 import java.security.SecureRandom;
 
-import com.petalmd.armor.authorization.ForbiddenException;
 import com.petalmd.armor.service.ArmorService;
-import com.petalmd.armor.transport.SSLClientNettyTransport;
-import com.petalmd.armor.transport.SSLNettyTransport;
 import org.elasticsearch.ElasticsearchException;
 import org.elasticsearch.action.get.GetRequest;
 import org.elasticsearch.action.get.GetResponse;

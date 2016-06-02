@@ -24,13 +24,11 @@ import io.searchbox.indices.mapping.PutMapping;
 import java.util.Map;
 
 import org.apache.http.HttpResponse;
-import org.elasticsearch.ElasticsearchException;
 import org.elasticsearch.common.collect.Tuple;
 import org.elasticsearch.common.settings.Settings;
 import org.junit.Assert;
 import org.junit.Test;
 
-import com.petalmd.armor.service.ArmorService;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 

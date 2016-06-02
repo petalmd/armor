@@ -14,7 +14,6 @@
  * limitations under the License.
  * 
  */
-
 package com.petalmd.armor.service;
 
 import java.io.File;
@@ -43,13 +42,14 @@ import com.petalmd.armor.audit.AuditListener;
 import com.petalmd.armor.authentication.backend.AuthenticationBackend;
 import com.petalmd.armor.authentication.http.HTTPAuthenticator;
 import com.petalmd.armor.authorization.Authorizator;
-import com.petalmd.armor.filter.level.ConfigurableSearchContextCallback;
-import com.petalmd.armor.filter.level.SearchContextCallback;
 import com.petalmd.armor.http.SessionStore;
 import com.petalmd.armor.rest.DefaultRestFilter;
 import com.petalmd.armor.rest.RestActionFilter;
 import com.petalmd.armor.util.ConfigConstants;
 import com.petalmd.armor.util.SecurityUtil;
+import java.security.AccessController;
+import java.security.PrivilegedExceptionAction;
+import org.elasticsearch.SpecialPermission;
 
 public class ArmorService extends AbstractLifecycleComponent<ArmorService> {
 
@@ -94,8 +94,8 @@ public class ArmorService extends AbstractLifecycleComponent<ArmorService> {
 
     @Inject
     public ArmorService(final Settings settings, final RestController restController, final Client client,
-                        final Authorizator authorizator, final AuthenticationBackend authenticationBackend, final HTTPAuthenticator httpAuthenticator,
-                        final SessionStore sessionStore, final AuditListener auditListener, final SearchService searchService) {
+            final Authorizator authorizator, final AuthenticationBackend authenticationBackend, final HTTPAuthenticator httpAuthenticator,
+            final SessionStore sessionStore, final AuditListener auditListener, final SearchService searchService) {
         super(settings);
         this.restController = restController;
         this.client = client;
@@ -107,55 +107,63 @@ public class ArmorService extends AbstractLifecycleComponent<ArmorService> {
         this.httpAuthenticator = httpAuthenticator;
         this.sessionStore = sessionStore;
 
+        SecurityManager sm = System.getSecurityManager();
+        if (sm != null) {
+            sm.checkPermission(new SpecialPermission());
+        }
+
         try {
-            method = RestController.class.getDeclaredMethod("getHandler", RestRequest.class);
-            method.setAccessible(true);
+            AccessController.doPrivileged(new PrivilegedExceptionAction<Boolean>() {
+                @Override
+                public Boolean run() throws Exception {
+                    method = RestController.class.getDeclaredMethod("getHandler", RestRequest.class);
+                    method.setAccessible(true);
+
+                    return true;
+                }
+            });
         } catch (final Exception e) {
             log.error(e.toString(), e);
             throw new ElasticsearchException(e.toString());
         }
 
-        try {
-            searchServiceSetCallbackMethod = SearchService.class.getDeclaredMethod("setCallback", SearchContextCallback.class);
-            searchServiceSetCallbackMethod.invoke(searchService, new ConfigurableSearchContextCallback(settings, auditListener));
-        } catch (final Exception e) {
-            log.error(e.toString(), e);
-            throw new ElasticsearchException(e.toString());
-        }
-
-        this.auditListener = auditListener;
-        //TODO FUTURE index change audit trail
-
-        final String keyPath = settings.get(ConfigConstants.ARMOR_KEY_PATH, ".");
+        final String keyPath = settings.get(ConfigConstants.ARMOR_KEY_PATH,".");
+//        AccessController.checkPermission(new FilePermission(keyPath+File.separator+"armor_node_key.key", "write"));
         SecretKey sc = null;
         try {
+            sc = AccessController.doPrivileged(new PrivilegedExceptionAction<SecretKey>() {
+                @Override
+                public SecretKey run() throws Exception {
+                    final File keyFile = new File(keyPath, "armor_node_key.key");
+                    SecretKey sc = null;
+                    if (keyFile.exists()) {
+                        log.debug("Loaded key from {}", keyFile.getAbsolutePath());
+                        sc = new SecretKeySpec(FileUtils.readFileToByteArray(keyFile), "AES");
+                    } else {
+                        final SecureRandom secRandom = SecureRandom.getInstance("SHA1PRNG");
+                        final KeyGenerator kg = KeyGenerator.getInstance("AES");
+                        kg.init(128, secRandom);
+                        final SecretKey secretKey = kg.generateKey();
+                        final byte[] enckey = secretKey.getEncoded();
 
-            final File keyFile = new File(keyPath, "armor_node_key.key");
-
-            if (keyFile.exists()) {
-                log.debug("Loaded key from {}", keyFile.getAbsolutePath());
-                sc = new SecretKeySpec(FileUtils.readFileToByteArray(keyFile), "AES");
-            } else {
-
-                final SecureRandom secRandom = SecureRandom.getInstance("SHA1PRNG");
-                final KeyGenerator kg = KeyGenerator.getInstance("AES");
-                kg.init(128, secRandom);
-                final SecretKey secretKey = kg.generateKey();
-                final byte[] enckey = secretKey.getEncoded();
-
-                if (enckey == null || enckey.length != 16) {
-                    throw new Exception("invalid key " + (enckey == null ? -1 : enckey.length));
+                        if (enckey == null || enckey.length != 16) {
+                            throw new Exception("invalid key " + (enckey == null ? -1 : enckey.length));
+                        }
+                        FileUtils.writeByteArrayToFile(keyFile, enckey);
+                        sc = secretKey;
+                        log.info("New key written to {}, make sure all nodes have this key", keyFile.getAbsolutePath());
+                    }
+                    return sc;
                 }
-                FileUtils.writeByteArrayToFile(keyFile, enckey);
-                sc = secretKey;
-                log.info("New key written to {}, make sure all nodes have this key", keyFile.getAbsolutePath());
-            }
-
+            });
         } catch (final Exception e) {
             log.error("Cannot generate or read secrety key", e);
             throw new ElasticsearchException(e.toString());
         }
 
+        this.auditListener = auditListener;
+        //TODO FUTURE index change audit trail
+        
         final boolean checkForRoot = settings.getAsBoolean(ConfigConstants.ARMOR_CHECK_FOR_ROOT, true);
 
         if (SecurityUtil.isRootUser()) {
@@ -180,7 +188,6 @@ public class ArmorService extends AbstractLifecycleComponent<ArmorService> {
             log.error("{} is configured insecure, consider setting it to false or " + ScriptService.DISABLE_DYNAMIC_SCRIPTING_DEFAULT,
                     ScriptService.DISABLE_DYNAMIC_SCRIPTING_SETTING);
         }*/
-
         if (searchService == null) {
             throw new RuntimeException("ssnull");
         }
@@ -221,13 +228,11 @@ public class ArmorService extends AbstractLifecycleComponent<ArmorService> {
              throw new ElasticsearchException("Wrong ES version, use 1.4.2 or later");
          }*/
 
-        /*if (!filterRegistered) {
+ /*if (!filterRegistered) {
             throw new ElasticsearchException("No filter configured");
         }*/
-
 //        log.info("Starting Search Guard with {} filters",
 //            (restActionFilters.length + dlsFilters.length + flsFilters.length + arFilters.length));
-
         log.trace("With settings " + this.settings.getAsMap());
 
     }
@@ -235,7 +240,6 @@ public class ArmorService extends AbstractLifecycleComponent<ArmorService> {
     /*public String getSecurityConfigurationIndex() {
         return securityConfigurationIndex;
     }*/
-
     @Override
     protected void doStop() throws ElasticsearchException {
         //no-op
