@@ -484,7 +484,7 @@ public abstract class AbstractUnitTest {
         if (useSpnego) {
             //SPNEGO/Kerberos setup
             log.debug("SPNEGO activated");
-            final AuthSchemeProvider nsf = new SPNegoSchemeFactory(true);//  new NegotiateSchemeProvider();
+            final AuthSchemeProvider nsf = new SPNegoSchemeFactory(true,false);//  new NegotiateSchemeProvider();
             final Credentials jaasCreds = new JaasCredentials();
             credsProvider.setCredentials(new AuthScope(null, -1, null, AuthSchemes.SPNEGO), jaasCreds);
             credsProvider.setCredentials(new AuthScope(null, -1, null, AuthSchemes.NTLM), new NTCredentials("Guest", "Guest", "Guest",
