@@ -108,7 +108,7 @@ public class MiscTest extends AbstractUnitTest {
     @Test
     public void testArmorIndexAttack() throws Exception {
 
-        final Settings settings = ImmutableSettings
+        final Settings settings = Settings
                 .settingsBuilder()
                 .putArray("armor.authentication.authorization.settingsdb.roles.jacksonm", "root")
                 .put("armor.authentication.settingsdb.user.jacksonm", "secret")

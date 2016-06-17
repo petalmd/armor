@@ -1,4 +1,4 @@
-# Kibana and ARMOR setup (WIP)
+# Kibana and ARMOR setup
 
 ## Armor Configuration
 All users with Kibana access need to read `.kibana`indice, if the user need to create visualization, dashbord or add indice, he need to write on this indice.
