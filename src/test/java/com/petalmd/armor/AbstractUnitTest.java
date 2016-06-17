@@ -14,7 +14,6 @@
  * limitations under the License.
  * 
  */
-
 package com.petalmd.armor;
 
 import io.searchbox.client.JestResult;
@@ -69,7 +68,7 @@ import org.apache.http.impl.client.HttpClients;
 import org.apache.mina.util.AvailablePortFinder;
 import org.elasticsearch.ElasticsearchTimeoutException;
 import org.elasticsearch.action.admin.cluster.health.ClusterHealthResponse;
-import org.elasticsearch.action.admin.cluster.health.ClusterHealthStatus;
+import org.elasticsearch.cluster.health.ClusterHealthStatus;
 import org.elasticsearch.client.Client;
 import org.elasticsearch.common.collect.Tuple;
 import org.elasticsearch.common.logging.ESLogger;
@@ -77,7 +76,6 @@ import org.elasticsearch.common.logging.Loggers;
 import org.elasticsearch.common.settings.Settings;
 import org.elasticsearch.common.unit.TimeValue;
 import org.elasticsearch.node.Node;
-import org.elasticsearch.node.NodeBuilder;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
@@ -91,6 +89,10 @@ import com.petalmd.armor.util.ConfigConstants;
 import com.petalmd.armor.util.SecurityUtil;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
+import java.util.ArrayList;
+import java.util.List;
+import org.elasticsearch.node.ArmorNode;
+import org.elasticsearch.plugins.Plugin;
 
 public abstract class AbstractUnitTest {
 
@@ -188,8 +190,8 @@ public abstract class AbstractUnitTest {
                 .put("armor.authentication.settingsdb.user." + username, password + (wrongPassword ? "-wrong" : ""))
                 .put("armor.authentication.authorizer.impl",
                         "com.petalmd.armor.authorization.simple.SettingsBasedAuthorizator")
-                        .put("armor.authentication.authentication_backend.impl",
-                                "com.petalmd.armor.authentication.backend.simple.SettingsBasedAuthenticationBackend").build();
+                .put("armor.authentication.authentication_backend.impl",
+                        "com.petalmd.armor.authentication.backend.simple.SettingsBasedAuthenticationBackend").build();
     }
 
     private Settings.Builder getDefaultSettingsBuilder(final int nodenum, final int nodePort, final int httpPort, final boolean dataNode,
@@ -197,14 +199,14 @@ public abstract class AbstractUnitTest {
 
         return Settings.settingsBuilder().put("node.name", "armor_testnode_" + nodenum)//.put("node.data", dataNode)
                 .put("node.master", masterNode).put("cluster.name", this.clustername)
-                .put("path.home", "/").put("path.data", "data/data")//.put("index.store.fs.memory.enabled", "true")
+                .put("path.home", ".").put("path.data", "data/data")//.put("index.store.fs.memory.enabled", "true")
                 .put("path.work", "data/work").put("path.logs", "data/logs").put("path.conf", "data/config")
                 .put("path.plugins", "data/plugins").put("plugin.types", ArmorPlugin.class.getName())
                 .put("index.number_of_shards", "3").put("index.number_of_replicas", "1")
                 .put("cluster.routing.allocation.disk.threshold_enabled", false)
-                .put("network.bind_host", "0.0.0.0").put("http.port", httpPort)//.put("http.enabled", !dataNode)
+                .put("network.bind_host", "0.0.0.0").put("http.port", httpPort).put("http.enabled", true)
                 .put("network.publish_host", "127.0.0.1").put("transport.tcp.port", nodePort).put("http.cors.enabled", true)
-                .put("network.tcp.connect_timeout", "60s").put("discovery.zen.ping.unicast.hosts","127.0.0.1:" + elasticsearchNodePort1)
+                .put("network.tcp.connect_timeout", "60s").put("discovery.zen.ping.unicast.hosts", "127.0.0.1:" + elasticsearchNodePort1)
                 .put(ConfigConstants.ARMOR_CHECK_FOR_ROOT, false).put(ConfigConstants.ARMOR_ALLOW_ALL_FROM_LOOPBACK, true)/*.put("node.local", false)*/;
 
     }
@@ -262,6 +264,12 @@ public abstract class AbstractUnitTest {
 
     }
 
+    private Node NodeWithArmor(final Settings settings) {
+        List<Class<? extends Plugin>> list = new ArrayList<>();
+        list.add(ArmorPlugin.class);
+        return new ArmorNode(settings, list);
+    }
+
     public final void startES(final Settings settings) throws Exception {
 
         FileUtils.deleteDirectory(new File("data"));
@@ -285,16 +293,19 @@ public abstract class AbstractUnitTest {
         elasticsearchNodePort2 = portIt.next();
         elasticsearchNodePort3 = portIt.next();
 
-        esNode1 = new NodeBuilder().settings(
-                getDefaultSettingsBuilder(1, elasticsearchNodePort1, elasticsearchHttpPort1, true, true).put(
-                        settings == null ? Settings.Builder.EMPTY_SETTINGS : settings).build()).node();
-        esNode2 = new NodeBuilder().settings(
+        esNode1 = NodeWithArmor(getDefaultSettingsBuilder(1, elasticsearchNodePort1, elasticsearchHttpPort1, true, true).put(
+                settings == null ? Settings.Builder.EMPTY_SETTINGS : settings).build());
+        esNode2 = NodeWithArmor(
                 getDefaultSettingsBuilder(2, elasticsearchNodePort2, elasticsearchHttpPort2, true, true).put(
-                        settings == null ? Settings.Builder.EMPTY_SETTINGS : settings).build()).node();
-        esNode3 = new NodeBuilder().settings(
+                settings == null ? Settings.Builder.EMPTY_SETTINGS : settings).build());
+        esNode3 = NodeWithArmor(
                 getDefaultSettingsBuilder(3, elasticsearchNodePort3, elasticsearchHttpPort3, true, false).put(
-                        settings == null ? Settings.Builder.EMPTY_SETTINGS : settings).build()).node();
+                settings == null ? Settings.Builder.EMPTY_SETTINGS : settings).build());
 
+        esNode1.start();
+        esNode2.start();
+        esNode3.start();
+        
         waitForGreenClusterState(esNode1.client());
     }
 
@@ -370,7 +381,7 @@ public abstract class AbstractUnitTest {
             }
 
             return restu;
-        } catch(Exception e) {
+        } catch (Exception e) {
             log.debug("foo");
             throw e;
         }
@@ -410,10 +421,9 @@ public abstract class AbstractUnitTest {
         client = getJestClient(getServerUri(connectFromLocalhost), username, password);
 
         final Tuple<JestResult, HttpResponse> restu = client.executeE(new Search.Builder(loadFile(file))
-        .addIndex(indices == null ? Collections.EMPTY_SET : Arrays.asList(indices))
-        .addType(types == null ? Collections.EMPTY_SET : Arrays.asList(types)).refresh(true).setHeader(headers)
-
-        .build());
+                .addIndex(indices == null ? Collections.EMPTY_SET : Arrays.asList(indices))
+                .addType(types == null ? Collections.EMPTY_SET : Arrays.asList(types)).refresh(true).setHeader(headers)
+                .build());
 
         final JestResult res = restu.v1();
 
@@ -474,12 +484,12 @@ public abstract class AbstractUnitTest {
         if (useSpnego) {
             //SPNEGO/Kerberos setup
             log.debug("SPNEGO activated");
-            final AuthSchemeProvider nsf = new SPNegoSchemeFactory(true);//  new NegotiateSchemeProvider();
+            final AuthSchemeProvider nsf = new SPNegoSchemeFactory(true,false);//  new NegotiateSchemeProvider();
             final Credentials jaasCreds = new JaasCredentials();
             credsProvider.setCredentials(new AuthScope(null, -1, null, AuthSchemes.SPNEGO), jaasCreds);
             credsProvider.setCredentials(new AuthScope(null, -1, null, AuthSchemes.NTLM), new NTCredentials("Guest", "Guest", "Guest",
                     "Guest"));
-            final Registry<AuthSchemeProvider> authSchemeRegistry = RegistryBuilder.<AuthSchemeProvider> create()
+            final Registry<AuthSchemeProvider> authSchemeRegistry = RegistryBuilder.<AuthSchemeProvider>create()
                     .register(AuthSchemes.SPNEGO, nsf).register(AuthSchemes.NTLM, new NTLMSchemeFactory()).build();
 
             hcb.setDefaultAuthSchemeRegistry(authSchemeRegistry);
@@ -503,7 +513,7 @@ public abstract class AbstractUnitTest {
             String[] protocols = null;
 
             if (enableSSLv3Only) {
-                protocols = new String[] { "SSLv3" };
+                protocols = new String[]{"SSLv3"};
             } else {
                 protocols = SecurityUtil.ENABLED_SSL_PROTOCOLS;
             }
@@ -542,12 +552,12 @@ public abstract class AbstractUnitTest {
 
         esNode1.client().admin().indices()
                 .prepareAliases()
-                .addAlias(new String[] { "ceo", "financial" }, "crucial")
+                .addAlias(new String[]{"ceo", "financial"}, "crucial")
                 .execute()
                 .actionGet();
         esNode1.client().admin().indices()
                 .prepareAliases()
-                .addAlias(new String[] { "crucial", "marketing" }, "internal")
+                .addAlias(new String[]{"crucial", "marketing"}, "internal")
                 .execute()
                 .actionGet();
 
@@ -575,7 +585,7 @@ public abstract class AbstractUnitTest {
         try {
             log.debug("waiting for cluster state {}", status.name());
             final ClusterHealthResponse healthResponse = client.admin().cluster().prepareHealth().setWaitForStatus(status)
-                    .setTimeout(timeout).execute().actionGet();
+                    .setTimeout(timeout).setWaitForNodes("3").execute().actionGet();
             if (healthResponse.isTimedOut()) {
                 throw new IOException("cluster state is " + healthResponse.getStatus().name() + " and not " + status.name()
                         + ", cowardly refusing to continue with operations");

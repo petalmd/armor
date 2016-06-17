@@ -1,4 +1,4 @@
-# A.R.M.O.R Security Plugin for ES 2.1
+# A.R.M.O.R Security Plugin for ES 2.3.3
 Elasticsearch security for free.
 
 ARMOR is a free and open source plugin for Elasticsearch which provides security features.
@@ -76,14 +76,14 @@ Install it like any other Elasticsearch plugin:
 (On Centos, you can find the `bin/plugin` at `/usr/share/elasticsearch`)
 
 ```
-# ES 2.1
-$ bin/plugin -i com.petalmd/armor/2.1.0
+# ES 2.3.3
+$ bin/plugin -i com.petalmd/armor/2.3.3
 ```
 
 Prerequisites:
 
 * Java 7 or 8 (recommended)
-* Elasticsearch 2.1.x
+* Elasticsearch 2.3.3
 
 Build it yourself:
 * Install maven 3.1+

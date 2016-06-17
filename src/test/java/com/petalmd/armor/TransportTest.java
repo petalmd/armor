@@ -1,14 +1,10 @@
 package com.petalmd.armor;
 
 import java.io.IOException;
-import java.io.NotSerializableException;
 import java.net.InetAddress;
 import java.security.SecureRandom;
 
-import com.petalmd.armor.authorization.ForbiddenException;
 import com.petalmd.armor.service.ArmorService;
-import com.petalmd.armor.transport.SSLClientNettyTransport;
-import com.petalmd.armor.transport.SSLNettyTransport;
 import org.elasticsearch.ElasticsearchException;
 import org.elasticsearch.action.get.GetRequest;
 import org.elasticsearch.action.get.GetResponse;
@@ -104,7 +100,7 @@ public class TransportTest extends AbstractUnitTest {
 
         final Settings tsettings = Settings
                 .settingsBuilder()
-                .put("path.plugins", "data/plugins").put("plugin.types", ArmorPlugin.class.getName())
+                .put("path.plugins", "data/plugins")
                 .put("cluster.name", "armor_testcluster")
                 .put(ConfigConstants.ARMOR_SSL_TRANSPORT_NODE_ENABLED, true)
                 .put(ConfigConstants.ARMOR_SSL_TRANSPORT_NODE_KEYSTORE_FILEPATH,
@@ -115,6 +111,7 @@ public class TransportTest extends AbstractUnitTest {
                 .build();
 
         final Client tc = new TransportClient.Builder()
+                .addPlugin(ArmorPlugin.class)
                 .settings(tsettings)
                 .build()
                 .addTransportAddress(
