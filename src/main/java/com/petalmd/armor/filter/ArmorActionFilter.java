@@ -14,17 +14,12 @@
  * limitations under the License.
  * 
  */
-
 package com.petalmd.armor.filter;
 
 import java.io.Serializable;
 import java.lang.reflect.Method;
 import java.net.InetAddress;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.Iterator;
-import java.util.List;
+import java.util.*;
 
 import org.elasticsearch.action.ActionListener;
 import org.elasticsearch.action.ActionRequest;
@@ -36,7 +31,9 @@ import org.elasticsearch.action.support.ActionFilterChain;
 import org.elasticsearch.client.Client;
 import org.elasticsearch.cluster.ClusterService;
 import org.elasticsearch.cluster.metadata.AliasMetaData;
+import org.elasticsearch.cluster.metadata.AliasOrIndex;
 import org.elasticsearch.common.collect.ImmutableOpenMap;
+import org.elasticsearch.common.collect.Tuple;
 import org.elasticsearch.common.inject.Inject;
 import org.elasticsearch.common.logging.ESLogger;
 import org.elasticsearch.common.logging.Loggers;
@@ -56,7 +53,8 @@ import com.petalmd.armor.tokeneval.TokenEvaluator.Evaluator;
 import com.petalmd.armor.tokeneval.TokenEvaluator.FilterAction;
 import com.petalmd.armor.util.ConfigConstants;
 import com.petalmd.armor.util.SecurityUtil;
-
+import org.elasticsearch.index.IndexNotFoundException;
+import org.elasticsearch.tasks.Task;
 
 public class ArmorActionFilter implements ActionFilter {
 
@@ -71,7 +69,7 @@ public class ArmorActionFilter implements ActionFilter {
 
     @Inject
     public ArmorActionFilter(final Settings settings, final AuditListener auditListener, final ClusterService clusterService,
-                             final Client client, final ArmorConfigService armorConfigService) {
+            final Client client, final ArmorConfigService armorConfigService) {
         this.auditListener = auditListener;
         this.settings = settings;
         this.clusterService = clusterService;
@@ -85,16 +83,19 @@ public class ArmorActionFilter implements ActionFilter {
     }
 
     @Override
-    public void apply(final String action, final ActionRequest request, final ActionListener listener, final ActionFilterChain chain) {
+    public void apply(Task task, final String action, final ActionRequest request, final ActionListener listener, final ActionFilterChain chain) {
 
         try {
-            apply0(action, request, listener, chain);
-        } catch (final ForbiddenException e){
+            apply0(task, action, request, listener, chain);
+        } catch (final ForbiddenException e) {
             log.error("Forbidden while apply() due to {} for action {}", e, e.toString(), action);
             throw e;
-        } catch (final Exception e) {
+        } catch (IndexNotFoundException e) {
+            throw e;
+        } catch (Exception e) {
             log.error("Error while apply() due to {} for action {}", e, e.toString(), action);
             throw new RuntimeException(e);
+
         }
     }
 
@@ -125,11 +126,11 @@ public class ArmorActionFilter implements ActionFilter {
         }
     }
 
-    private void apply0(final String action, final ActionRequest request, final ActionListener listener, final ActionFilterChain chain)
+    private void apply0(Task task, final String action, final ActionRequest request, final ActionListener listener, final ActionFilterChain chain)
             throws Exception {
-
-        if (settings.getAsBoolean(ConfigConstants.ARMOR_ALLOW_CLUSTER_MONITOR, true) && action.startsWith("cluster:monitor/")) {
-            chain.proceed(action, request, listener);
+        //proceeding the chaing for kibana field stats request
+        if (settings.getAsBoolean(ConfigConstants.ARMOR_ALLOW_KIBANA_ACTIONS, true) && (action.startsWith("cluster:monitor/") || action.contains("indices:data/read/field_stats"))) {
+            chain.proceed(task, action, request, listener);
             return;
         }
 
@@ -143,7 +144,13 @@ public class ArmorActionFilter implements ActionFilter {
 
         if (request.remoteAddress() == null && user == null) {
             log.trace("INTRANODE request");
-            chain.proceed(action, request, listener);
+            try {
+                chain.proceed(task, action, request, listener);
+            } catch (IndexNotFoundException e) {
+                log.warn("Missing internal Armor Index, access granted");
+                return;
+            }
+
             return;
         }
 
@@ -162,7 +169,7 @@ public class ArmorActionFilter implements ActionFilter {
             }
 
             log.trace("Authenticated INTERNODE (cluster) message, pass through");
-            chain.proceed(action, request, listener);
+            chain.proceed(task, action, request, listener);
             return;
         }
 
@@ -176,89 +183,93 @@ public class ArmorActionFilter implements ActionFilter {
                 && !SecurityUtil.isWildcardMatch(action, "*update*", false) && !SecurityUtil.isWildcardMatch(action, "*create*", false);
 
         final TokenEvaluator evaluator = new TokenEvaluator(armorConfigService.getSecurityConfiguration());
+        final Evaluator eval;
         request.putInContext("_armor_token_evaluator", evaluator);
 
         final List<String> ci = new ArrayList<String>();
         final List<String> aliases = new ArrayList<String>();
         final List<String> types = new ArrayList<String>();
 
-        if (request instanceof IndicesRequest) {
-            final IndicesRequest ir = (IndicesRequest) request;
-            addType(ir, types, action);
-            log.trace("Indices {}", Arrays.toString(ir.indices()));
-            log.trace("Indices opts allowNoIndices {}", ir.indicesOptions().allowNoIndices());
-            log.trace("Indices opts expandWildcardsOpen {}", ir.indicesOptions().expandWildcardsOpen());
+        if (request.getFromContext("armor_ac_evaluator") == null) {
 
-            try {
-                ci.addAll(resolveAliases(Arrays.asList(ir.indices())));
-                aliases.addAll(getOnlyAliases(Arrays.asList(ir.indices())));
-            } catch(java.lang.NullPointerException e) {}
-
-            if (!allowedForAllIndices && (ir.indices() == null || Arrays.asList(ir.indices()).contains("_all") || ir.indices().length == 0)) {
-                log.error("Attempt from " + request.remoteAddress() + " to _all indices for " + action + " and " + user);
-                auditListener.onMissingPrivileges(user == null ? "unknown" : user.getName(), request);
-                //This blocks?
-                //listener.onFailure(new AuthException("Attempt from "+request.remoteAddress()+" to _all indices for " + action + "and "+user));
-                throw new ForbiddenException("Attempt from {} to _all indices for {} and {}", request.remoteAddress(), action, user);
-
-            }
-
-        }
-
-        if (request instanceof CompositeIndicesRequest) {
-            final CompositeIndicesRequest irc = (CompositeIndicesRequest) request;
-            final List irs = irc.subRequests();
-            for (final Iterator iterator = irs.iterator(); iterator.hasNext();) {
-                final IndicesRequest ir = (IndicesRequest) iterator.next();
+            if (request instanceof IndicesRequest) {
+                final IndicesRequest ir = (IndicesRequest) request;
                 addType(ir, types, action);
-                log.trace("C Indices {}", Arrays.toString(ir.indices()));
+                log.trace("Indices {}", Arrays.toString(ir.indices()));
                 log.trace("Indices opts allowNoIndices {}", ir.indicesOptions().allowNoIndices());
                 log.trace("Indices opts expandWildcardsOpen {}", ir.indicesOptions().expandWildcardsOpen());
 
-                ci.addAll(resolveAliases(Arrays.asList(ir.indices())));
-                aliases.addAll(getOnlyAliases(Arrays.asList(ir.indices())));
-                if (!allowedForAllIndices
-                        && (ir.indices() == null || Arrays.asList(ir.indices()).contains("_all") || ir.indices().length == 0)) {
-                    log.error("Attempt from " + request.remoteAddress() + " to _all indices for " + action + "and " + user);
+                try {
+                    ci.addAll(resolveAliases(Arrays.asList(ir.indices())));
+                    aliases.addAll(getOnlyAliases(Arrays.asList(ir.indices())));
+                } catch (java.lang.NullPointerException e) {
+                }
+
+                if (!allowedForAllIndices && (ir.indices() == null || Arrays.asList(ir.indices()).contains("_all") || ir.indices().length == 0)) {
+                    log.error("Attempt from {} to _all indices for {} and {}", request.remoteAddress(), action, user);
                     auditListener.onMissingPrivileges(user == null ? "unknown" : user.getName(), request);
 
-                    //This blocks?
-                    //listener.onFailure(new AuthException("Attempt from "+request.remoteAddress()+" to _all indices for " + action + "and "+user));
-                    //break;
+                    listener.onFailure(new ForbiddenException("Attempt from {} to _all indices for {} and {}", request.remoteAddress(), action, user));
                     throw new ForbiddenException("Attempt from {} to _all indices for {} and {}", request.remoteAddress(), action, user);
                 }
 
             }
-        }
 
-        if (!settings.getAsBoolean(ConfigConstants.ARMOR_ALLOW_NON_LOOPBACK_QUERY_ON_ARMOR_INDEX, false) && ci.contains(settings.get(ConfigConstants.ARMOR_CONFIG_INDEX_NAME, ConfigConstants.DEFAULT_SECURITY_CONFIG_INDEX))) {
-            log.error("Attemp from " + request.remoteAddress() + " on " + settings.get(ConfigConstants.ARMOR_CONFIG_INDEX_NAME, ConfigConstants.DEFAULT_SECURITY_CONFIG_INDEX));
-            auditListener.onMissingPrivileges(user.getName(), request);
-            throw new ForbiddenException("Only allowed from localhost (loopback)");
-        }
+            if (request instanceof CompositeIndicesRequest) {
+                final CompositeIndicesRequest irc = (CompositeIndicesRequest) request;
+                final List irs = irc.subRequests();
+                for (final Iterator iterator = irs.iterator(); iterator.hasNext();) {
+                    final IndicesRequest ir = (IndicesRequest) iterator.next();
+                    addType(ir, types, action);
+                    log.trace("C Indices {}", Arrays.toString(ir.indices()));
+                    log.trace("Indices opts allowNoIndices {}", ir.indicesOptions().allowNoIndices());
+                    log.trace("Indices opts expandWildcardsOpen {}", ir.indicesOptions().expandWildcardsOpen());
 
-        if (ci.contains("_all")) {
-            ci.clear();
+                    ci.addAll(resolveAliases(Arrays.asList(ir.indices())));
+                    aliases.addAll(getOnlyAliases(Arrays.asList(ir.indices())));
+                    if (!allowedForAllIndices
+                            && (ir.indices() == null || Arrays.asList(ir.indices()).contains("_all") || ir.indices().length == 0)) {
+                        log.error("Attempt from " + request.remoteAddress() + " to _all indices for " + action + "and " + user);
+                        auditListener.onMissingPrivileges(user == null ? "unknown" : user.getName(), request);
 
-            if (!allowedForAllIndices) {
-                ci.add("*");
+                        listener.onFailure(new ForbiddenException("Attempt from {} to _all indices for {} and {}", request.remoteAddress(), action, user));
+                        throw new ForbiddenException("Attempt from {} to _all indices for {} and {}", request.remoteAddress(), action, user);
+                    }
+
+                }
             }
 
+            if (!settings.getAsBoolean(ConfigConstants.ARMOR_ALLOW_NON_LOOPBACK_QUERY_ON_ARMOR_INDEX, false) && ci.contains(settings.get(ConfigConstants.ARMOR_CONFIG_INDEX_NAME, ConfigConstants.DEFAULT_SECURITY_CONFIG_INDEX))) {
+                log.error("Attemp from " + request.remoteAddress() + " on " + settings.get(ConfigConstants.ARMOR_CONFIG_INDEX_NAME, ConfigConstants.DEFAULT_SECURITY_CONFIG_INDEX));
+                auditListener.onMissingPrivileges(user.getName(), request);
+                throw new ForbiddenException("Only allowed from localhost (loopback)");
+            }
+
+            if (ci.contains("_all")) {
+                ci.clear();
+
+                if (!allowedForAllIndices) {
+                    ci.add("*");
+                }
+
+            }
+
+            final InetAddress resolvedAddress = request.getFromContext("armor_resolved_rest_address");
+
+            if (resolvedAddress == null) {
+                //not a rest request
+                log.debug("Not a rest request, will ignore host rules");
+
+            }
+
+            eval = evaluator.getEvaluator(ci, aliases, types, resolvedAddress, user);
+
+            request.putInContext("armor_ac_evaluator", eval);
+
+            copyContextToHeader(request);
+        } else {
+            eval = request.getFromContext("armor_ac_evaluator");
         }
-
-        final InetAddress resolvedAddress = request.getFromContext("armor_resolved_rest_address");
-
-        if (resolvedAddress == null) {
-            //not a rest request
-            log.debug("Not a rest request, will ignore host rules");
-
-        }
-
-        final Evaluator eval = evaluator.getEvaluator(ci, aliases, types, resolvedAddress, user);
-
-        request.putInContext("armor_ac_evaluator", eval);
-
-        copyContextToHeader(request);
 
         final List<String> filter = request.getFromContext("armor_filter", Collections.EMPTY_LIST);
 
@@ -296,11 +307,8 @@ public class ArmorActionFilter implements ActionFilter {
 
                         log.warn("{}.{} Action '{}' is forbidden due to {}", ft, fn, action, forbiddenAction);
                         auditListener.onMissingPrivileges(user == null ? "unknown" : user.getName(), request);
-                        //This blocks?
-                        //listener.onFailure(new AuthException("Action '" + action + "' is forbidden due to " + forbiddenAction));
-                        //break outer;
+                        listener.onFailure(new ForbiddenException("Action '{}' is forbidden due to {}", action, forbiddenAction));
                         throw new ForbiddenException("Action '{}' is forbidden due to {}", action, forbiddenAction);
-
                     }
                 }
 
@@ -308,7 +316,7 @@ public class ArmorActionFilter implements ActionFilter {
                     final String allowedAction = iterator.next();
                     if (SecurityUtil.isWildcardMatch(action, allowedAction, false)) {
                         log.trace("Action '{}' is allowed due to {}", action, allowedAction);
-                        chain.proceed(action, request, listener);
+                        chain.proceed(task, action, request, listener);
                         return;
                     }
                 }
@@ -316,9 +324,7 @@ public class ArmorActionFilter implements ActionFilter {
                 log.warn("{}.{} Action '{}' is forbidden due to {}", ft, fn, action, "DEFAULT");
                 auditListener.onMissingPrivileges(user == null ? "unknown" : user.getName(), request);
 
-                //This blocks?
-                //listener.onFailure(new AuthException("Action '" + action + "' is forbidden due to DEFAULT"));
-                //break outer;
+                listener.onFailure(new ForbiddenException("Action '{}' is forbidden due to DEFAULT", action));
                 throw new ForbiddenException("Action '{}' is forbidden due to DEFAULT", action);
             }
 
@@ -356,10 +362,9 @@ public class ArmorActionFilter implements ActionFilter {
             }
 
             //DLS/FLS stuff is not done here, its done on SearchCallback
-
         }
 
-        chain.proceed(action, request, listener);
+        chain.proceed(task, action, request, listener);
 
     }
 
@@ -373,25 +378,26 @@ public class ArmorActionFilter implements ActionFilter {
 
         final List<String> result = new ArrayList<String>();
 
-        final ImmutableOpenMap<String, ImmutableOpenMap<String, AliasMetaData>> aliases = clusterService.state().metaData().aliases();
+        final SortedMap<String, AliasOrIndex> aliases = clusterService.state().metaData().getAliasAndIndexLookup();
 
         for (int i = 0; i < indices.size(); i++) {
             final String index = indices.get(i);
 
-            final ImmutableOpenMap<String, AliasMetaData> indexAliases = aliases.get(index);
+            final AliasOrIndex indexAliases = aliases.get(index);
 
-            if (indexAliases == null || indexAliases.size() == 0) {
+            if (!indexAliases.isAlias()) {
                 result.add(index);
                 log.trace("{} is an concrete index", index);
                 continue;
             }
 
-            log.trace("{} is an alias and points to -> {}", index, indexAliases.keys());
+            log.trace("{} is an alias and points to -> {}", index, indexAliases.getIndices());
 
-            for (final Iterator<org.elasticsearch.common.hppc.cursors.ObjectObjectCursor<String, AliasMetaData>> iterator = indexAliases
-                    .iterator(); iterator.hasNext();) {
-                final org.elasticsearch.common.hppc.cursors.ObjectObjectCursor<String, AliasMetaData> entry = iterator.next();
-                result.add(entry.key);
+            final Iterable<Tuple<String, AliasMetaData>> iterable = ((AliasOrIndex.Alias) indexAliases).getConcreteIndexAndAliasMetaDatas();
+
+            for (final Iterator<Tuple<String, AliasMetaData>> iterator = iterable.iterator(); iterator.hasNext();) {
+                final Tuple<String, AliasMetaData> entry = iterator.next();
+                result.add(entry.v1());
             }
 
         }
@@ -404,19 +410,16 @@ public class ArmorActionFilter implements ActionFilter {
 
         final List<String> result = new ArrayList<String>();
 
-        final ImmutableOpenMap<String, ImmutableOpenMap<String, AliasMetaData>> aliases = clusterService.state().metaData().aliases();
+        final SortedMap<String, AliasOrIndex> aliases = clusterService.state().metaData().getAliasAndIndexLookup();
 
         for (int i = 0; i < indices.size(); i++) {
             final String index = indices.get(i);
 
-            final ImmutableOpenMap<String, AliasMetaData> indexAliases = aliases.get(index);
+            final AliasOrIndex indexAliases = aliases.get(index);
 
-            if (indexAliases == null || indexAliases.size() == 0) {
-                continue;
-            } else {
+            if (indexAliases.isAlias()) {
                 result.add(index);
             }
-
         }
 
         return result;

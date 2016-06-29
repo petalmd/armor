@@ -30,7 +30,6 @@ import java.io.UnsupportedEncodingException;
 import java.nio.charset.Charset;
 import java.util.Iterator;
 import java.util.Map.Entry;
-import java.util.concurrent.ExecutionException;
 
 import org.apache.commons.lang3.StringUtils;
 import org.apache.http.HttpResponse;
@@ -68,7 +67,7 @@ public class HeaderAwareJestHttpClient extends AbstractJestClient implements Jes
 
     public Tuple<JestResult, HttpResponse> executeE(final Action clientRequest) throws IOException {
 
-        final String elasticSearchRestUrl = getRequestURL(getElasticSearchServer(), clientRequest.getURI());
+        final String elasticSearchRestUrl = getRequestURL(getNextServer(), clientRequest.getURI());
 
         final HttpUriRequest request = constructHttpMethod(clientRequest.getRestMethodName(), elasticSearchRestUrl,
                 clientRequest.getData(gson));
@@ -101,7 +100,7 @@ public class HeaderAwareJestHttpClient extends AbstractJestClient implements Jes
     @Override
     public <T extends JestResult> T execute(final Action<T> clientRequest) throws IOException {
 
-        final String elasticSearchRestUrl = getRequestURL(getElasticSearchServer(), clientRequest.getURI());
+        final String elasticSearchRestUrl = getRequestURL(getNextServer(), clientRequest.getURI());
 
         final HttpUriRequest request = constructHttpMethod(clientRequest.getRestMethodName(), elasticSearchRestUrl,
                 clientRequest.getData(gson));
@@ -131,8 +130,8 @@ public class HeaderAwareJestHttpClient extends AbstractJestClient implements Jes
     }
 
     @Override
-    public <T extends JestResult> void executeAsync(final Action<T> clientRequest, final JestResultHandler<T> resultHandler)
-            throws ExecutionException, InterruptedException, IOException {
+    //    <T extends JestResult> void executeAsync(Action<T> var1, JestResultHandler<? super T> var2);
+    public <T extends JestResult> void executeAsync(final Action<T> clientRequest, final JestResultHandler<? super T> resultHandler) {
 
         synchronized (this) {
             if (!asyncClient.isRunning()) {
@@ -140,10 +139,11 @@ public class HeaderAwareJestHttpClient extends AbstractJestClient implements Jes
             }
         }
 
-        final String elasticSearchRestUrl = getRequestURL(getElasticSearchServer(), clientRequest.getURI());
+        final String elasticSearchRestUrl = getRequestURL(getNextServer(), clientRequest.getURI());
 
-        final HttpUriRequest request = constructHttpMethod(clientRequest.getRestMethodName(), elasticSearchRestUrl,
-                clientRequest.getData(gson));
+        try {
+            final HttpUriRequest request = constructHttpMethod(clientRequest.getRestMethodName(), elasticSearchRestUrl,
+                    clientRequest.getData(gson));
 
         // add headers added to action
         if (!clientRequest.getHeaders().isEmpty()) {
@@ -172,7 +172,7 @@ public class HeaderAwareJestHttpClient extends AbstractJestClient implements Jes
             public void cancelled() {
             }
         });
-
+    } catch (Exception e) {}
     }
 
     @Override
@@ -241,7 +241,12 @@ public class HeaderAwareJestHttpClient extends AbstractJestClient implements Jes
 
     private <T extends JestResult> T deserializeResponse(final HttpResponse response, final Action<T> clientRequest) throws IOException {
         final StatusLine statusLine = response.getStatusLine();
-        return clientRequest.createNewElasticSearchResult(response.getEntity() != null ? EntityUtils.toString(response.getEntity()) : null,
+
+//        log.error(EntityUtils.toString(response.getEntity()));
+
+        final String json = response.getEntity() != null ? EntityUtils.toString(response.getEntity()) : null;
+
+        return clientRequest.createNewElasticSearchResult(json,
                 statusLine.getStatusCode(), statusLine.getReasonPhrase(), gson);
     }
 

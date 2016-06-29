@@ -18,7 +18,6 @@
 package com.petalmd.armor;
 
 import org.elasticsearch.common.inject.CreationException;
-import org.elasticsearch.common.settings.ImmutableSettings;
 import org.elasticsearch.common.settings.Settings;
 import org.junit.Assert;
 import org.junit.Test;
@@ -30,7 +29,7 @@ public class UnixTest extends AbstractScenarioTest {
     @Test(expected = CreationException.class)
     public void testWaffleFailOnUnix() throws Exception {
 
-        final Settings settings = ImmutableSettings
+        final Settings settings = Settings
                 .settingsBuilder()
                 .put("armor.authentication.http_authenticator.impl",
                         "com.petalmd.armor.authentication.http.waffle.HTTPWaffleAuthenticator")

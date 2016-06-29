@@ -16,7 +16,7 @@
 
     <groupId>com.petalmd</groupId>
     <artifactId>armor</artifactId>
-    <version>1.7.1-SNAPSHOT</version>
+    <version>2.0.0-SNAPSHOT</version>
     <packaging>jar</packaging>
 
     <name>A.R.M.O.R</name>
@@ -44,20 +44,21 @@
     </licenses>
 
     <properties>
-        <elasticsearch.version>1.7.3</elasticsearch.version>
+        <elasticsearch.version>2.3.3</elasticsearch.version>
         <apache.ds.version>2.0.0-M17</apache.ds.version>
         <apache.ds.api.version>1.0.0-M28</apache.ds.api.version>
+        <slf4j.api.bundleversion>1.7.13</slf4j.api.bundleversion>
         <path.delim>\\</path.delim>
         <dependency.locations.enabled>false</dependency.locations.enabled>
-        <lucene.maven.version>4.10.4</lucene.maven.version>
+        <lucene.maven.version>5.5.0</lucene.maven.version>
     </properties>
 
     <scm>
         <url>https://github.com/petaldevelopment/armor</url>
         <connection>scm:git:git@github.com:petalmddevelopment/armor</connection>
         <developerConnection>scm:git:git@github.com:petaldevelopment/armor.git</developerConnection>
-      <tag>HEAD</tag>
-  </scm>
+        <tag>HEAD</tag>
+    </scm>
 
     <issueManagement>
         <system>GitHub</system>
@@ -100,7 +101,7 @@
             <artifactId>api-ldap-client-all</artifactId>
             <version>${apache.ds.api.version}</version>
         </dependency>
-
+                
         <dependency>
             <groupId>com.github.dblock.waffle</groupId>
             <artifactId>waffle-jna</artifactId>
@@ -169,15 +170,15 @@
         <dependency>
             <groupId>io.searchbox</groupId>
             <artifactId>jest</artifactId>
-            <version>0.1.4</version>
+            <version>2.0.0</version>
             <scope>test</scope>
         </dependency>
 
         <dependency>
             <groupId>org.slf4j</groupId>
             <artifactId>slf4j-log4j12</artifactId>
-            <version>1.7.12</version>
-            <scope>test</scope>
+            <version>1.7.13</version>
+            <!--scope>test</scope-->
         </dependency>
 
         <dependency>
@@ -330,10 +331,11 @@
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-surefire-plugin</artifactId>
-                <version>2.19</version>
+                <version>2.19.1</version>
                 <configuration>
                     <includes>
                         <include>**/*Test*.java</include>
+                        <argLine>-Djava.security.manager -Djava.security.policy=${basedir}/src/main/resources/plugin-metadata/plugin-security.policy</argLine>
                     </includes>
                 </configuration>
             </plugin>

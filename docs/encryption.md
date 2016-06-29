@@ -1,6 +1,6 @@
 # Encryption / Authentification
 ## Generate Self sign server certificate and add them to truststore
-### Generate certificate (keystore.jks) 
+### Generate certificate (keystore.jks)
 ```
 $ keytool -genkey -alias server_name -keyalg RSA -keypass test123 -storepass test123 -keystore keystore.jks
 What is your first and last name?
@@ -81,7 +81,6 @@ armor.ssl.transport.node.encforce_hostname_verification.resolve_host_name: false
 ```
 
 ## Client <> node (REST API)
-WIP
 
 ```YAML
 # elasticsearch/elasticsearch.yml

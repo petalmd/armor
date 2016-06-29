@@ -23,12 +23,12 @@ import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 
+import com.google.common.collect.Lists;
 import org.elasticsearch.action.get.MultiGetRequest;
 import org.elasticsearch.action.get.MultiGetRequest.Item;
 import org.elasticsearch.action.search.MultiSearchRequest;
 import org.elasticsearch.action.search.SearchRequest;
 import org.elasticsearch.common.Strings;
-import org.elasticsearch.common.collect.Lists;
 import org.elasticsearch.common.logging.ESLogger;
 import org.elasticsearch.common.logging.Loggers;
 import org.elasticsearch.common.settings.Settings;
@@ -214,7 +214,6 @@ public abstract class AbstractACRestFilter extends RestFilter {
     protected SearchRequest toSearchRequest(final RestRequest request) {
 
         final SearchRequest searchRequest = new SearchRequest();
-        searchRequest.listenerThreaded(false);
         searchRequest.routing(request.param("routing"));
         searchRequest.copyContextFrom(request);
         searchRequest.preference(request.param("preference"));
@@ -229,7 +228,6 @@ public abstract class AbstractACRestFilter extends RestFilter {
     protected MultiSearchRequest toMultiSearchRequest(final RestRequest request) throws Exception {
 
         final MultiGetRequest multiGetRequest = new MultiGetRequest();
-        multiGetRequest.listenerThreaded(false);
         multiGetRequest.refresh(request.paramAsBoolean("refresh", multiGetRequest.refresh()));
         multiGetRequest.preference(request.param("preference"));
         multiGetRequest.realtime(request.paramAsBoolean("realtime", null));
@@ -248,7 +246,6 @@ public abstract class AbstractACRestFilter extends RestFilter {
 
         final MultiSearchRequest msearch = new MultiSearchRequest();
         msearch.copyContextFrom(request);
-        msearch.listenerThreaded(false);
 
         for (final Iterator<Item> iterator = multiGetRequest.iterator(); iterator.hasNext();) {
             final Item item = iterator.next();
@@ -257,7 +254,6 @@ public abstract class AbstractACRestFilter extends RestFilter {
             st.routing(item.routing());
             st.indices(item.indices());
             st.types(item.type());
-            st.listenerThreaded(false);
             st.preference(request.param("preference"));
             st.source(SearchSourceBuilder.searchSource().query(new IdsQueryBuilder(item.type()).addIds(item.id())));
             msearch.add(st);

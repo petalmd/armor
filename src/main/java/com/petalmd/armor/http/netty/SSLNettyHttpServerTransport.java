@@ -30,7 +30,9 @@ import javax.net.ssl.TrustManagerFactory;
 import org.elasticsearch.common.inject.Inject;
 import org.elasticsearch.common.logging.ESLogger;
 import org.elasticsearch.common.logging.Loggers;
-import org.elasticsearch.common.netty.handler.ssl.SslHandler;
+import org.jboss.netty.channel.ChannelPipeline;
+import org.jboss.netty.channel.ChannelPipelineFactory;
+import org.jboss.netty.handler.ssl.SslHandler;
 import org.elasticsearch.common.network.NetworkService;
 import org.elasticsearch.common.settings.Settings;
 import org.elasticsearch.common.util.BigArrays;
@@ -44,11 +46,10 @@ public class SSLNettyHttpServerTransport extends NettyHttpServerTransport {
     @Inject
     public SSLNettyHttpServerTransport(final Settings settings, final NetworkService networkService, final BigArrays bigArrays) {
         super(settings, networkService, bigArrays);
-
     }
 
     @Override
-    public org.elasticsearch.common.netty.channel.ChannelPipelineFactory configureServerChannelPipelineFactory() {
+    public ChannelPipelineFactory configureServerChannelPipelineFactory() {
         return new SSLHttpChannelPipelineFactory(this, this.settings, this.detailedErrorsEnabled);
     }
 
@@ -78,11 +79,11 @@ public class SSLNettyHttpServerTransport extends NettyHttpServerTransport {
         }
 
         @Override
-        public org.elasticsearch.common.netty.channel.ChannelPipeline getPipeline() throws Exception {
+        public ChannelPipeline getPipeline() throws Exception {
 
             log.trace("SslHandler configured and added to netty pipeline");
 
-            final org.elasticsearch.common.netty.channel.ChannelPipeline pipeline = super.getPipeline();
+            final org.jboss.netty.channel.ChannelPipeline pipeline = super.getPipeline();
             TrustManagerFactory tmf = null;
 
             if (enforceClientAuth) {

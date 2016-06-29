@@ -1,4 +1,4 @@
-# A.R.M.O.R Security Plugin for ES 1.7
+# A.R.M.O.R Security Plugin for ES 2.3.3
 Elasticsearch security for free.
 
 ARMOR is a free and open source plugin for Elasticsearch which provides security features.
@@ -76,14 +76,14 @@ Install it like any other Elasticsearch plugin:
 (On Centos, you can find the `bin/plugin` at `/usr/share/elasticsearch`)
 
 ```
-# ES 1.7
-$ bin/plugin -i com.petalmd/armor/1.7.0
+# ES 2.3.3
+$ bin/plugin -i com.petalmd/armor/2.3.3
 ```
 
 Prerequisites:
 
 * Java 7 or 8 (recommended)
-* Elasticsearch 1.7.x
+* Elasticsearch 2.3.3
 
 Build it yourself:
 * Install maven 3.1+
@@ -253,7 +253,7 @@ If a user which has the _marketing_ role and want to access index _finance_ the 
 filters_bypass: []
 filters_execute: ["flsfilter.filter_sensitive_fina*", "actionrequestfilter.readonly"]
 ```
-which then will be resolved to 
+which then will be resolved to
 
 ```yaml
 filters_execute: ["flsfilter.filter_sensitive_fina*", "actionrequestfilter.readonly"]
@@ -333,6 +333,8 @@ TODO
 Contributions, questions, and comments are all welcomed and encouraged!
 
 ## License
+This project derives from [Search-guard 1.6](https://github.com/floragunncom/search-guard)
+
 Copyright 2015 PetalMD
 
 Licensed under the Apache License, Version 2.0 (the "License");

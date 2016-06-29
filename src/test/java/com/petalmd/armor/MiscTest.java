@@ -24,7 +24,6 @@ import java.util.Map;
 
 import org.apache.http.HttpResponse;
 import org.elasticsearch.common.collect.Tuple;
-import org.elasticsearch.common.settings.ImmutableSettings;
 import org.elasticsearch.common.settings.Settings;
 import org.junit.Assert;
 import org.junit.Test;
@@ -43,7 +42,7 @@ public class MiscTest extends AbstractUnitTest {
     @Test
     public void unauthenticatedTest() throws Exception {
 
-        final Settings settings = ImmutableSettings
+        final Settings settings = Settings
                 .settingsBuilder()
                 .putArray("armor.restactionfilter.names", "readonly")
                 .putArray("armor.restactionfilter.readonly.allowed_actions", "*")
@@ -73,11 +72,11 @@ public class MiscTest extends AbstractUnitTest {
     @Test
     public void testClusterMonitorDisable() throws Exception {
 
-        final Settings settings = ImmutableSettings
+        final Settings settings = Settings
                 .settingsBuilder()
                 .putArray("armor.actionrequestfilter.names", "allowHealth")
                 .putArray("armor.actionrequestfilter.allowHealth.allowed_actions", "cluster:monitor/health")
-                .put("armor.allow_cluster_monitor", false)
+                .put("armor.allow_kibana_actions", false)
                 .putArray("armor.authentication.authorization.settingsdb.roles.jacksonm", "root")
                 .put("armor.authentication.settingsdb.user.jacksonm", "secret")
                 .put("armor.authentication.authorizer.impl",
@@ -109,7 +108,7 @@ public class MiscTest extends AbstractUnitTest {
     @Test
     public void testArmorIndexAttack() throws Exception {
 
-        final Settings settings = ImmutableSettings
+        final Settings settings = Settings
                 .settingsBuilder()
                 .putArray("armor.authentication.authorization.settingsdb.roles.jacksonm", "root")
                 .put("armor.authentication.settingsdb.user.jacksonm", "secret")
@@ -132,7 +131,7 @@ public class MiscTest extends AbstractUnitTest {
 
         final JestClient client = getJestClient(getServerUri(false), username, password);
 
-        final JestResult jr = client.execute(new PutMapping.Builder("_all", "ac", "\"ac\" : {" + "\"properties\" : {"
+        final JestResult jr = client.execute(new PutMapping.Builder("_all", "ac", "{" + "\"properties\" : {"
                 + "\"rules\" : {\"type\" : \"string\", \"store\" : true }" + "}" + "}"
         ).setHeader(headers).build());
 

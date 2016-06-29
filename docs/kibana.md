@@ -1,4 +1,4 @@
-# Kibana and ARMOR setup (WIP)
+# Kibana and ARMOR setup
 
 ## Armor Configuration
 All users with Kibana access need to read `.kibana`indice, if the user need to create visualization, dashbord or add indice, he need to write on this indice.
@@ -18,9 +18,11 @@ armor.authentication.authorization.settingsdb.roles.kibana: ["kibana"]
 armor.authentication.authorization.settingsdb.roles.julien: ["kibana", "stats_ro"]
 ```
 
-If you set armor.allow_cluster_monitor at false, you will have to create a filter to authorize the 2 following actions
+If you set armor.allow\_kibana\_actions at false and still want to use kibana, you will have to create a filter to authorize the 2 following actions
  -cluster:monitor/health
  -cluster:monitor/nodes/info
+ -indices:data/read/field\_stats
+ -
 
 ```YAML
 armor.actionrequestfilter.names: ["defaultfilter", "readwrite"]
@@ -28,6 +30,7 @@ armor.actionrequestfilter.names: ["defaultfilter", "readwrite"]
 armor.actionrequestfilter.defaultfilter.allowed_actions: [
  "cluster:monitor/health",
  "cluster:monitor/nodes/info",
+ "indices:data/read/field\_stats"
 ]
 
  ...

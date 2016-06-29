@@ -126,7 +126,7 @@ public class EmbeddedLDAPServer {
         final CreateLdapServer cl = (CreateLdapServer) AnnotationUtils.getInstance(CreateLdapServer.class);
         ldapServer = ServerAnnotationProcessor.instantiateLdapServer(cl, directoryService);
 
-        ldapServer.setKeystoreFile(SecurityUtil.getAbsoluteFilePathFromClassPath("SearchguardKS.jks").getAbsolutePath());
+        ldapServer.setKeystoreFile(SecurityUtil.getAbsoluteFilePathFromClassPath("ArmorKS.jks").getAbsolutePath());
         ldapServer.setCertificatePassword("changeit");
         ldapServer.setEnabledCipherSuites(Arrays.asList(SecurityUtil.ENABLED_SSL_CIPHERS));
 

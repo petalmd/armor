@@ -14,7 +14,6 @@
  * limitations under the License.
  * 
  */
-
 package com.petalmd.armor;
 
 import io.searchbox.client.JestResult;
@@ -31,6 +30,8 @@ import java.net.Inet6Address;
 import java.net.InetAddress;
 import java.net.NetworkInterface;
 import java.net.SocketException;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.security.KeyStore;
 import java.security.Principal;
 import java.util.Arrays;
@@ -67,17 +68,14 @@ import org.apache.http.impl.client.HttpClients;
 import org.apache.mina.util.AvailablePortFinder;
 import org.elasticsearch.ElasticsearchTimeoutException;
 import org.elasticsearch.action.admin.cluster.health.ClusterHealthResponse;
-import org.elasticsearch.action.admin.cluster.health.ClusterHealthStatus;
+import org.elasticsearch.cluster.health.ClusterHealthStatus;
 import org.elasticsearch.client.Client;
 import org.elasticsearch.common.collect.Tuple;
 import org.elasticsearch.common.logging.ESLogger;
 import org.elasticsearch.common.logging.Loggers;
-import org.elasticsearch.common.settings.ImmutableSettings;
-import org.elasticsearch.common.settings.ImmutableSettings.Builder;
 import org.elasticsearch.common.settings.Settings;
 import org.elasticsearch.common.unit.TimeValue;
 import org.elasticsearch.node.Node;
-import org.elasticsearch.node.NodeBuilder;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
@@ -91,6 +89,10 @@ import com.petalmd.armor.util.ConfigConstants;
 import com.petalmd.armor.util.SecurityUtil;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
+import java.util.ArrayList;
+import java.util.List;
+import org.elasticsearch.node.ArmorNode;
+import org.elasticsearch.plugins.Plugin;
 
 public abstract class AbstractUnitTest {
 
@@ -188,21 +190,25 @@ public abstract class AbstractUnitTest {
                 .put("armor.authentication.settingsdb.user." + username, password + (wrongPassword ? "-wrong" : ""))
                 .put("armor.authentication.authorizer.impl",
                         "com.petalmd.armor.authorization.simple.SettingsBasedAuthorizator")
-                        .put("armor.authentication.authentication_backend.impl",
-                                "com.petalmd.armor.authentication.backend.simple.SettingsBasedAuthenticationBackend").build();
+                .put("armor.authentication.authentication_backend.impl",
+                        "com.petalmd.armor.authentication.backend.simple.SettingsBasedAuthenticationBackend").build();
     }
 
-    private Builder getDefaultSettingsBuilder(final int nodenum, final int nodePort, final int httpPort, final boolean dataNode,
+    private Settings.Builder getDefaultSettingsBuilder(final int nodenum, final int nodePort, final int httpPort, final boolean dataNode,
             final boolean masterNode) {
 
-        return ImmutableSettings.settingsBuilder().put("node.name", "armor_testnode_" + nodenum).put("node.data", dataNode)
-                .put("node.master", masterNode).put("cluster.name", clustername).put("index.store.type", "memory")
-                .put("index.store.fs.memory.enabled", "true").put("gateway.type", "none").put("path.data", "data/data")
+        return Settings.settingsBuilder().put("node.name", "armor_testnode_" + nodenum)//.put("node.data", dataNode)
+                .put("node.master", masterNode).put("cluster.name", this.clustername)
+                .put("path.home", ".").put("path.data", "data/data")//.put("index.store.fs.memory.enabled", "true")
                 .put("path.work", "data/work").put("path.logs", "data/logs").put("path.conf", "data/config")
-                .put("path.plugins", "data/plugins").put("index.number_of_shards", "3").put("index.number_of_replicas", "1")
-                .put("http.port", httpPort).put("http.enabled", !dataNode).put("network.tcp.connect_timeout", 60000)
-                .put("transport.tcp.port", nodePort).put("http.cors.enabled", true).put(ConfigConstants.ARMOR_CHECK_FOR_ROOT, false)
-                .put(ConfigConstants.ARMOR_ALLOW_ALL_FROM_LOOPBACK, true).put("node.local", false);
+                .put("path.plugins", "data/plugins").put("plugin.types", ArmorPlugin.class.getName())
+                .put("index.number_of_shards", "3").put("index.number_of_replicas", "1")
+                .put("cluster.routing.allocation.disk.threshold_enabled", false)
+                .put("network.bind_host", "0.0.0.0").put("http.port", httpPort).put("http.enabled", true)
+                .put("network.publish_host", "127.0.0.1").put("transport.tcp.port", nodePort).put("http.cors.enabled", true)
+                .put("network.tcp.connect_timeout", "60s").put("discovery.zen.ping.unicast.hosts", "127.0.0.1:" + elasticsearchNodePort1)
+                .put(ConfigConstants.ARMOR_CHECK_FOR_ROOT, false).put(ConfigConstants.ARMOR_ALLOW_ALL_FROM_LOOPBACK, true)/*.put("node.local", false)*/;
+
     }
 
     protected final ESLogger log = Loggers.getLogger(this.getClass());
@@ -222,7 +228,6 @@ public abstract class AbstractUnitTest {
     }
 
     public static String getNonLocalhostAddress() {
-
         try {
             for (final Enumeration<NetworkInterface> en = NetworkInterface.getNetworkInterfaces(); en.hasMoreElements();) {
                 final NetworkInterface intf = en.nextElement();
@@ -259,6 +264,12 @@ public abstract class AbstractUnitTest {
 
     }
 
+    private Node NodeWithArmor(final Settings settings) {
+        List<Class<? extends Plugin>> list = new ArrayList<>();
+        list.add(ArmorPlugin.class);
+        return new ArmorNode(settings, list);
+    }
+
     public final void startES(final Settings settings) throws Exception {
 
         FileUtils.deleteDirectory(new File("data"));
@@ -282,16 +293,19 @@ public abstract class AbstractUnitTest {
         elasticsearchNodePort2 = portIt.next();
         elasticsearchNodePort3 = portIt.next();
 
-        esNode1 = new NodeBuilder().settings(
-                getDefaultSettingsBuilder(1, elasticsearchNodePort1, elasticsearchHttpPort1, false, true).put(
-                        settings == null ? ImmutableSettings.Builder.EMPTY_SETTINGS : settings).build()).node();
-        esNode2 = new NodeBuilder().settings(
+        esNode1 = NodeWithArmor(getDefaultSettingsBuilder(1, elasticsearchNodePort1, elasticsearchHttpPort1, true, true).put(
+                settings == null ? Settings.Builder.EMPTY_SETTINGS : settings).build());
+        esNode2 = NodeWithArmor(
                 getDefaultSettingsBuilder(2, elasticsearchNodePort2, elasticsearchHttpPort2, true, true).put(
-                        settings == null ? ImmutableSettings.Builder.EMPTY_SETTINGS : settings).build()).node();
-        esNode3 = new NodeBuilder().settings(
+                settings == null ? Settings.Builder.EMPTY_SETTINGS : settings).build());
+        esNode3 = NodeWithArmor(
                 getDefaultSettingsBuilder(3, elasticsearchNodePort3, elasticsearchHttpPort3, true, false).put(
-                        settings == null ? ImmutableSettings.Builder.EMPTY_SETTINGS : settings).build()).node();
+                settings == null ? Settings.Builder.EMPTY_SETTINGS : settings).build());
 
+        esNode1.start();
+        esNode2.start();
+        esNode3.start();
+        
         waitForGreenClusterState(esNode1.client());
     }
 
@@ -321,9 +335,7 @@ public abstract class AbstractUnitTest {
 
     @After
     public void tearDown() throws Exception {
-
         // This will stop and clean the local node
-
         if (esNode3 != null) {
             esNode3.close();
         }
@@ -344,29 +356,35 @@ public abstract class AbstractUnitTest {
             ldapServer.stop();
         }
 
+        Path currentRelativePath = Paths.get("data/data");
+        FileUtils.deleteDirectory(currentRelativePath.toFile());
     }
 
     protected final Tuple<JestResult, HttpResponse> executeIndex(final String file, final String index, final String type, final String id,
             final boolean mustBeSuccesfull, final boolean connectFromLocalhost) throws Exception {
 
         client = getJestClient(getServerUri(connectFromLocalhost), username, password);
+        try {
+            final Tuple<JestResult, HttpResponse> restu = client.executeE(new Index.Builder(loadFile(file)).index(index).type(type).id(id)
+                    .refresh(true).setHeader(headers).build());
 
-        final Tuple<JestResult, HttpResponse> restu = client.executeE(new Index.Builder(loadFile(file)).index(index).type(type).id(id)
-                .refresh(true).setHeader(headers).build());
+            final JestResult res = restu.v1();
 
-        final JestResult res = restu.v1();
-
-        if (mustBeSuccesfull) {
-            if (res.getErrorMessage() != null) {
-                log.error("Index operation result: " + res.getErrorMessage());
+            if (mustBeSuccesfull) {
+                if (res.getErrorMessage() != null) {
+                    log.error("Index operation result: " + res.getErrorMessage());
+                }
+                Assert.assertTrue("Error msg: " + res.getErrorMessage() + res.getJsonString(), res.isSucceeded());
+            } else {
+                log.debug("Index operation result fails as expected: " + res.getErrorMessage());
+                Assert.assertTrue(!res.isSucceeded());
             }
-            Assert.assertTrue("Error msg: " + res.getErrorMessage() + res.getJsonString(), res.isSucceeded());
-        } else {
-            log.debug("Index operation result fails as expected: " + res.getErrorMessage());
-            Assert.assertTrue(!res.isSucceeded());
-        }
 
-        return restu;
+            return restu;
+        } catch (Exception e) {
+            log.debug("foo");
+            throw e;
+        }
     }
 
     protected final Tuple<JestResult, HttpResponse> executeIndexAsString(final String string, final String index, final String type,
@@ -374,7 +392,7 @@ public abstract class AbstractUnitTest {
 
         client = getJestClient(getServerUri(connectFromLocalhost), username, password);
 
-        Index.Builder builder = new Index.Builder(string).index(index).type(type).refresh(true).setHeader(headers);
+        Index.Builder builder = new Index.Builder(string).index(index).type(type)/*.refresh(true)*/.setHeader(headers);
         if (id != null && id.length() > 0) {
             builder = builder.id(id);
         }
@@ -389,7 +407,8 @@ public abstract class AbstractUnitTest {
             }
             Assert.assertTrue("Error msg: " + res.getErrorMessage() + res.getJsonString(), res.isSucceeded());
         } else {
-            log.debug("Index operation result fails as expected: " + res.getErrorMessage());
+            log.error(res.getJsonString());
+            log.error("Index operation result fails as expected: " + res.getErrorMessage());
             Assert.assertTrue(!res.isSucceeded());
         }
 
@@ -402,10 +421,9 @@ public abstract class AbstractUnitTest {
         client = getJestClient(getServerUri(connectFromLocalhost), username, password);
 
         final Tuple<JestResult, HttpResponse> restu = client.executeE(new Search.Builder(loadFile(file))
-        .addIndex(indices == null ? Collections.EMPTY_SET : Arrays.asList(indices))
-        .addType(types == null ? Collections.EMPTY_SET : Arrays.asList(types)).refresh(true).setHeader(headers)
-
-        .build());
+                .addIndex(indices == null ? Collections.EMPTY_SET : Arrays.asList(indices))
+                .addType(types == null ? Collections.EMPTY_SET : Arrays.asList(types)).refresh(true).setHeader(headers)
+                .build());
 
         final JestResult res = restu.v1();
 
@@ -466,12 +484,12 @@ public abstract class AbstractUnitTest {
         if (useSpnego) {
             //SPNEGO/Kerberos setup
             log.debug("SPNEGO activated");
-            final AuthSchemeProvider nsf = new SPNegoSchemeFactory(true);//  new NegotiateSchemeProvider();
+            final AuthSchemeProvider nsf = new SPNegoSchemeFactory(true,false);//  new NegotiateSchemeProvider();
             final Credentials jaasCreds = new JaasCredentials();
             credsProvider.setCredentials(new AuthScope(null, -1, null, AuthSchemes.SPNEGO), jaasCreds);
             credsProvider.setCredentials(new AuthScope(null, -1, null, AuthSchemes.NTLM), new NTCredentials("Guest", "Guest", "Guest",
                     "Guest"));
-            final Registry<AuthSchemeProvider> authSchemeRegistry = RegistryBuilder.<AuthSchemeProvider> create()
+            final Registry<AuthSchemeProvider> authSchemeRegistry = RegistryBuilder.<AuthSchemeProvider>create()
                     .register(AuthSchemes.SPNEGO, nsf).register(AuthSchemes.NTLM, new NTLMSchemeFactory()).build();
 
             hcb.setDefaultAuthSchemeRegistry(authSchemeRegistry);
@@ -480,15 +498,14 @@ public abstract class AbstractUnitTest {
         hcb.setDefaultCredentialsProvider(credsProvider);
 
         if (serverUri.startsWith("https")) {
-
             log.debug("Configure Jest with SSL");
 
             final KeyStore myTrustStore = KeyStore.getInstance("JKS");
-            myTrustStore.load(new FileInputStream(SecurityUtil.getAbsoluteFilePathFromClassPath("SearchguardTS.jks")),
+            myTrustStore.load(new FileInputStream(SecurityUtil.getAbsoluteFilePathFromClassPath("ArmorTS.jks")),
                     "changeit".toCharArray());
 
             final KeyStore keyStore = KeyStore.getInstance("JKS");
-            keyStore.load(new FileInputStream(SecurityUtil.getAbsoluteFilePathFromClassPath("SearchguardKS.jks")), "changeit".toCharArray());
+            keyStore.load(new FileInputStream(SecurityUtil.getAbsoluteFilePathFromClassPath("ArmorKS.jks")), "changeit".toCharArray());
 
             final SSLContext sslContext = SSLContexts.custom().useTLS().loadKeyMaterial(keyStore, "changeit".toCharArray())
                     .loadTrustMaterial(myTrustStore).build();
@@ -496,7 +513,7 @@ public abstract class AbstractUnitTest {
             String[] protocols = null;
 
             if (enableSSLv3Only) {
-                protocols = new String[] { "SSLv3" };
+                protocols = new String[]{"SSLv3"};
             } else {
                 protocols = SecurityUtil.ENABLED_SSL_PROTOCOLS;
             }
@@ -518,7 +535,6 @@ public abstract class AbstractUnitTest {
     }
 
     protected final void setupTestData(final String armorConfig) throws Exception {
-
         executeIndex("dummy_content.json", "ceo", "internal", "tp_1", true, true);
         executeIndex("dummy_content.json", "marketing", "flyer", "tp_2", true, true);
         executeIndex("dummy_content.json", "marketing", "customer", "tp_3", true, true);
@@ -534,9 +550,16 @@ public abstract class AbstractUnitTest {
         executeIndex("dummy_content2.json", "future", "docs", "f_1", true, true);
         executeIndex("dummy_content2.json", "future", "docs", "f_2", true, true);
 
-        esNode1.client().admin().indices().prepareAliases().addAlias(new String[] { "ceo", "financial" }, "crucial").execute().actionGet();
-        esNode1.client().admin().indices().prepareAliases().addAlias(new String[] { "crucial", "marketing" }, "internal").execute()
-        .actionGet();
+        esNode1.client().admin().indices()
+                .prepareAliases()
+                .addAlias(new String[]{"ceo", "financial"}, "crucial")
+                .execute()
+                .actionGet();
+        esNode1.client().admin().indices()
+                .prepareAliases()
+                .addAlias(new String[]{"crucial", "marketing"}, "internal")
+                .execute()
+                .actionGet();
 
         executeIndex(armorConfig, "armor", "ac", "ac", true, true);
     }
@@ -562,7 +585,7 @@ public abstract class AbstractUnitTest {
         try {
             log.debug("waiting for cluster state {}", status.name());
             final ClusterHealthResponse healthResponse = client.admin().cluster().prepareHealth().setWaitForStatus(status)
-                    .setTimeout(timeout).execute().actionGet();
+                    .setTimeout(timeout).setWaitForNodes("3").execute().actionGet();
             if (healthResponse.isTimedOut()) {
                 throw new IOException("cluster state is " + healthResponse.getStatus().name() + " and not " + status.name()
                         + ", cowardly refusing to continue with operations");
@@ -594,8 +617,9 @@ public abstract class AbstractUnitTest {
         }
     }
 
-    protected ImmutableSettings.Builder cacheEnabled(final boolean cache) {
-        return ImmutableSettings.settingsBuilder().put("armor.authentication.authorizer.cache.enable", cache)
+    protected Settings.Builder cacheEnabled(final boolean cache) {
+        return Settings.settingsBuilder()
+                .put("armor.authentication.authorizer.cache.enable", cache)
                 .put("armor.authentication.authentication_backend.cache.enable", cache);
     }
 
