@@ -76,7 +76,7 @@ public class MiscTest extends AbstractUnitTest {
                 .settingsBuilder()
                 .putArray("armor.actionrequestfilter.names", "allowHealth")
                 .putArray("armor.actionrequestfilter.allowHealth.allowed_actions", "cluster:monitor/health")
-                .put("armor.allow_cluster_monitor", false)
+                .put("armor.allow_kibana_actions", false)
                 .putArray("armor.authentication.authorization.settingsdb.roles.jacksonm", "root")
                 .put("armor.authentication.settingsdb.user.jacksonm", "secret")
                 .put("armor.authentication.authorizer.impl",

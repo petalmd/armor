@@ -129,8 +129,7 @@ public class ArmorActionFilter implements ActionFilter {
     private void apply0(Task task, final String action, final ActionRequest request, final ActionListener listener, final ActionFilterChain chain)
             throws Exception {
         //proceeding the chaing for kibana field stats request
-        if (action.startsWith("cluster:monitor/")
-                || action.contains("indices:data/read/field_stats")) {
+        if (settings.getAsBoolean(ConfigConstants.ARMOR_ALLOW_KIBANA_ACTIONS, true) && (action.startsWith("cluster:monitor/") || action.contains("indices:data/read/field_stats"))) {
             chain.proceed(task, action, request, listener);
             return;
         }

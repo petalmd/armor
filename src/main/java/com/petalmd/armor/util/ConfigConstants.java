@@ -23,7 +23,7 @@ public final class ConfigConstants {
     public static final String ARMOR_ACTIONREQUESTFILTER = "armor.actionrequestfilter.names";
     public static final String ARMOR_ALLOW_ALL_FROM_LOOPBACK = "armor.allow_all_from_loopback";
     public static final String ARMOR_ALLOW_NON_LOOPBACK_QUERY_ON_ARMOR_INDEX = "armor.allow_non_loopback_query_on_armor_index";
-    public static final String ARMOR_ALLOW_CLUSTER_MONITOR = "armor.allow_cluster_monitor";
+    public static final String ARMOR_ALLOW_KIBANA_ACTIONS = "armor.allow_kibana_actions";
     public static final String ARMOR_AUDITLOG_ENABLED = "armor.auditlog.enabled";
     public static final String ARMOR_TRANSPORT_AUTH_ENABLED = "armor.transport_auth.enabled";
     public static final String ARMOR_AUTHENTICATION_AUTHENTICATION_BACKEND = "armor.authentication.authentication_backend.impl";

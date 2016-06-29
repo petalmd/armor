@@ -103,7 +103,7 @@ public abstract class AbstractActionFilter implements ActionFilter {
         log.debug("Context {}", request.getContext());
         log.debug("Headers {}", request.getHeaders());
 
-        if (action.startsWith("cluster:monitor/")) {
+        if (settings.getAsBoolean(ConfigConstants.ARMOR_ALLOW_KIBANA_ACTIONS, true) && (action.startsWith("cluster:monitor/") || action.contains("indices:data/read/field_stats"))) {
             chain.proceed(task, action, request, listener);
             return;
         }
