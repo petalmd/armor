@@ -1,4 +1,5 @@
 /*
+ * Copyright 2015 floragunn UG (haftungsbeschränkt)
  * Copyright 2015 PetalMD
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
