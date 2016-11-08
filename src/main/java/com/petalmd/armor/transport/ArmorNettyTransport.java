@@ -37,6 +37,7 @@ import org.elasticsearch.transport.netty.NettyTransport;
 
 import com.petalmd.armor.service.ArmorService;
 import com.petalmd.armor.util.SecurityUtil;
+import org.elasticsearch.indices.breaker.CircuitBreakerService;
 import org.jboss.netty.channel.ChannelPipeline;
 import org.jboss.netty.channel.ChannelPipelineFactory;
 
@@ -44,8 +45,8 @@ public class ArmorNettyTransport extends NettyTransport {
 
     @Inject
     public ArmorNettyTransport(final Settings settings, final ThreadPool threadPool, final NetworkService networkService,
-                               final BigArrays bigArrays, final Version version) {
-        super(settings, threadPool, networkService, bigArrays, version, new NamedWriteableRegistry());
+                               final BigArrays bigArrays, final Version version, final CircuitBreakerService circuitBreakerService) {
+        super(settings, threadPool, networkService, bigArrays, version, new NamedWriteableRegistry(),circuitBreakerService);
     }
 
     @Override

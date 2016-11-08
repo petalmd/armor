@@ -23,14 +23,15 @@ import org.elasticsearch.common.inject.Inject;
 import org.elasticsearch.common.network.NetworkService;
 import org.elasticsearch.common.settings.Settings;
 import org.elasticsearch.common.util.BigArrays;
+import org.elasticsearch.indices.breaker.CircuitBreakerService;
 import org.elasticsearch.threadpool.ThreadPool;
 
 public class SSLClientNettyTransport extends SSLNettyTransport {
 
     @Inject
     public SSLClientNettyTransport(final Settings settings, final ThreadPool threadPool, final NetworkService networkService,
-            final BigArrays bigArrays, final Version version) {
-        super(settings, threadPool, networkService, bigArrays, version);
+            final BigArrays bigArrays, final Version version, final CircuitBreakerService circuitBreakerService) {
+        super(settings, threadPool, networkService, bigArrays, version, circuitBreakerService);
 
     }
 
