@@ -18,9 +18,6 @@
 
 package com.petalmd.armor.transport;
 
-import java.io.IOException;
-
-import org.elasticsearch.Version;
 import org.elasticsearch.common.io.stream.StreamInput;
 import org.elasticsearch.common.logging.ESLogger;
 import org.jboss.netty.channel.Channel;
@@ -50,12 +47,6 @@ public class ArmorMessageChannelHandler extends MessageChannelHandler {
         super.handleResponse(channel, buffer, handler);
     }
 
-    @Override
-    protected String handleRequest(final Channel channel, final StreamInput buffer, final long requestId, final Version version)
-            throws IOException {
-        final String action = super.handleRequest(channel, buffer, requestId, version);
-        return action;
-    }
 
     @Override
     public void channelConnected(final ChannelHandlerContext ctx, final ChannelStateEvent e) {

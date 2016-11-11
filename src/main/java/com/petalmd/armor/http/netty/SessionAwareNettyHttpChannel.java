@@ -32,8 +32,9 @@ import com.petalmd.armor.http.Session;
 import com.petalmd.armor.http.SessionStore;
 import com.petalmd.armor.http.netty.MutualSSLHandler.DefaultHttpsRequest;
 import com.petalmd.armor.util.SecurityUtil;
+import org.elasticsearch.rest.AbstractRestChannel;
 
-public class SessionAwareNettyHttpChannel extends RestChannel {
+public class SessionAwareNettyHttpChannel extends AbstractRestChannel {
 
     protected final ESLogger log = Loggers.getLogger(this.getClass());
     private final SessionStore sessionStore;
