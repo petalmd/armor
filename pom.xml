@@ -44,7 +44,7 @@
     </licenses>
 
     <properties>
-        <elasticsearch.version>2.4.1</elasticsearch.version>
+        <elasticsearch.version>6.8.15</elasticsearch.version>
         <apache.ds.version>2.0.0-M17</apache.ds.version>
         <apache.ds.api.version>1.0.0-M28</apache.ds.api.version>
         <slf4j.api.bundleversion>1.7.13</slf4j.api.bundleversion>
